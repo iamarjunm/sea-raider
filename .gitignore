@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.next-engine-build/
+out/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example

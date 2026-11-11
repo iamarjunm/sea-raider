@@ -1,0 +1,46 @@
+{
+  "modes": [
+    {
+      "name": "base",
+      "cost": 1.0,
+      "events": "base.jsonl.zst",
+      "weights": "base.csv"
+    },
+    {
+      "name": "bonus_chance",
+      "cost": 1.5,
+      "events": "bonus_chance.jsonl.zst",
+      "weights": "bonus_chance.csv"
+    },
+    {
+      "name": "super_bonus",
+      "cost": 5.0,
+      "events": "super_bonus.jsonl.zst",
+      "weights": "super_bonus.csv"
+    },
+    {
+      "name": "pirates_chance",
+      "cost": 25.0,
+      "events": "pirates_chance.jsonl.zst",
+      "weights": "pirates_chance.csv"
+    },
+    {
+      "name": "feature_spin",
+      "cost": 10.0,
+      "events": "feature_spin.jsonl.zst",
+      "weights": "feature_spin.csv"
+    },
+    {
+      "name": "unknown_bonus",
+      "cost": 250.0,
+      "events": "unknown_bonus.jsonl.zst",
+      "weights": "unknown_bonus.csv"
+    },
+    {
+      "name": "unknown_extreme",
+      "cost": 500.0,
+      "events": "unknown_extreme.jsonl.zst",
+      "weights": "unknown_extreme.csv"
+    }
+  ]
+}

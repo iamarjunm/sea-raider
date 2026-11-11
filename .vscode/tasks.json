@@ -1,0 +1,377 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Validate one million mode RTP results",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Recalibrate one million mode RTP results",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify final one million mode RTP results",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm one million RTP target",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run final million spin RTP report",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify calibrated overall RTP",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final million spin RTP verification",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run slot math tests",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"jiti",
+				"lib/slot-engine.test.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final million spin validation",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Move slot engine into maths package",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"move",
+				"/Y",
+				"lib\\slot-engine.ts",
+				"maths\\slot-engine.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Move math engine source",
+			"type": "shell",
+			"command": "move",
+			"args": [
+				"/Y",
+				"lib\\slot-engine.ts",
+				"maths\\slot-engine.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Relocate authoritative maths engine",
+			"type": "shell",
+			"command": "mv",
+			"args": [
+				"lib/slot-engine.ts",
+				"maths/slot-engine.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate separated maths package",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"jiti",
+				"lib/slot-engine.test.ts"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run maths package simulator",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Recheck published maths RTP",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final published maths validation",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm final maths package report",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"simulate:rtp",
+				"--",
+				"--spins",
+				"1000000",
+				"--seed",
+				"20261104"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build static maths export",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build:maths"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Rebuild publishable maths bundle",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build:maths"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate math publish files",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const fs=require('fs'); const path=require('path'); const root='maths'; const idx=JSON.parse(fs.readFileSync(path.join(root,'index.json'),'utf8')); if(!Array.isArray(idx.modes)||idx.modes.length<1) throw Error('modes missing'); const names=new Set(); for(const m of idx.modes){ if(names.has(m.name.toLowerCase())) throw Error('duplicate mode'); names.add(m.name.toLowerCase()); const events=fs.readFileSync(path.join(root,m.events),'utf8').trim().split(/\\r?\\n/).filter(Boolean).map(JSON.parse); const rows=fs.readFileSync(path.join(root,m.weights),'utf8').trim().split(/\\r?\\n/).filter(Boolean).map((line)=>line.split(',')); if(events.length!==rows.length) throw Error(m.name+' row count mismatch'); for(let i=0;i<events.length;i++){ if(!Number.isInteger(events[i].id)||!Array.isArray(events[i].events)||!Number.isInteger(events[i].payoutMultiplier)||events[i].payoutMultiplier<0) throw Error(m.name+' invalid event'); if(rows[i].length!==3||rows[i][2]!==String(events[i].payoutMultiplier)) throw Error(m.name+' payout mismatch'); if(!/^\\d+$/.test(rows[i][0])||!/^\\d+$/.test(rows[i][1])||Number(rows[i][1])<0) throw Error(m.name+' invalid CSV'); } } console.log('Valid math publish files:',idx.modes.length,'modes');"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate math publish package",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"validate:maths"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Clone official Math SDK",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"clone",
+				"https://github.com/engineio/math-sdk.git",
+				"maths/math-sdk"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Generate SDK publish bundle",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"generate:maths-publish"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run SDK publish verification",
+			"type": "shell",
+			"command": "C:/Users/arjun/AppData/Local/Microsoft/WindowsApps/python3.11.exe",
+			"args": [
+				"-c",
+				"import sys; sys.path.insert(0, r'maths/math-sdk'); from utils.rgs_verification import verify_lookup_format, verify_books_and_payout_mults; from pathlib import Path; root=Path('maths'); modes=['base','bonus_chance','super_bonus','pirates_chance','feature_spin','unknown_bonus','unknown_extreme']; [verify_lookup_format(str(root/f'{m}.csv')) for m in modes]; [verify_books_and_payout_mults(str(root/f'{m}.jsonl.zst')) for m in modes]; print('SDK format verification passed:', len(modes), 'modes')"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify generated SDK math",
+			"type": "shell",
+			"command": "C:/Users/arjun/AppData/Local/Microsoft/WindowsApps/python3.11.exe",
+			"args": [
+				"maths/verify-sdk-publish.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify SDK math artifacts",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"verify:maths-sdk"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate generated math manifest",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"validate:maths"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify SDK math artifacts again",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"verify:maths-sdk"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Sea Raider - Echoes of the Warrior",
+  "description": "High-volatility 5x3 pirate slot game with Bonus Chance, Super Bonus, Pirates Chance, Feature Spin, Unknown Bonus, and Ethereal Cataclysm 50,000x Max Win.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
