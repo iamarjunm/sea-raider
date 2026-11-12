@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { BonusType } from '../lib/slot-engine';
+import LivingCaptain from './scene/LivingCaptain';
 
 interface BonusIntroModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ export default function BonusIntroModal({ isOpen, bonusType, scatterCount, spins
             animate={{ x: 0, opacity: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 76, damping: 18, mass: 1.05 }}
           >
-            <Image src="/assets/sea-raider/sword-captain.png" alt="Pirate captain raising his cutlass" fill sizes="(max-width: 640px) 85vw, 660px" className="object-contain object-bottom drop-shadow-[0_0_40px_rgba(0,0,0,.85)]" />
+            <LivingCaptain label="Pirate captain raising his cutlass" />
           </motion.div>
 
           <motion.section
@@ -69,7 +70,7 @@ export default function BonusIntroModal({ isOpen, bonusType, scatterCount, spins
             onClick={(event) => event.stopPropagation()}
           >
             <p className="text-[10px] font-black tracking-[.42em] text-[#8ee7e1] sm:text-xs">BONUS ROUND AWARDED</p>
-            <h2 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.05] text-[#fff0c8] drop-shadow-[0_3px_16px_rgba(255,184,69,.32)] sm:text-4xl lg:text-5xl">
+            <h2 className="pirate-display mt-3 max-w-[15ch] text-3xl leading-[1.02] text-[#ffe9b0] drop-shadow-[0_3px_16px_rgba(255,184,69,.4)] sm:text-5xl lg:text-6xl">
               {copy.title}
             </h2>
             <p className="mt-3 text-xs font-bold tracking-[.16em] text-white/75 sm:text-sm">{copy.subtitle}</p>
