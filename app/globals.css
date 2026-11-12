@@ -878,85 +878,13 @@
   .bonus-intro__stats { margin-top:12px; padding-block:10px; }
 }
 
-.game-console {
-  min-height: 88px;
-  border: 1px solid rgba(222,180,101,.48);
-  border-radius: 18px;
-  background: linear-gradient(112deg,rgba(10,10,12,.96),rgba(20,17,13,.96) 48%,rgba(9,9,11,.97));
-  box-shadow: 0 12px 34px rgba(0,0,0,.62),inset 0 1px rgba(255,239,204,.11),inset 0 -1px rgba(214,160,65,.15);
-  backdrop-filter: blur(16px);
-}
-.game-console::before { content:''; position:absolute; inset:1px; border:1px solid rgba(255,244,218,.055); border-radius:17px; pointer-events:none; }
-.console-left { width:100%; }
-.console-wallet { flex:1 1 280px; max-width:310px; }
-.console-right { justify-self:end !important; width:fit-content; max-width:100%; }
-.console-win { flex:0 1 190px !important; width:190px; }
-.console-nav { padding-right: 10px; border-right: 1px solid rgba(231,190,111,.3); }
-.console-feature-button { display:flex; height:36px; align-items:center; gap:6px; border:1px solid rgba(225,201,139,.28); border-radius:12px; background:linear-gradient(145deg,rgba(56,44,25,.82),rgba(13,25,30,.92)); padding:0 11px; color:#f3d994; font-size:8px; font-weight:1000; letter-spacing:.1em; white-space:nowrap; }
-.console-feature-button:hover { border-color:rgba(255,224,157,.8); background:linear-gradient(145deg,rgba(93,68,31,.9),rgba(17,43,48,.95)); }
-.console-icon-button { display:flex; width:36px; height:36px; align-items:center; justify-content:center; border:1px solid rgba(225,190,124,.32); border-radius:10px; background:linear-gradient(145deg,rgba(36,30,22,.92),rgba(8,8,9,.96)); color:#f0d8a5; box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.08); transition:transform .16s ease,border-color .16s ease,color .16s ease; }
-.console-icon-button:hover { transform:translateY(-1px); border-color:rgba(255,218,139,.75); color:#ffe7ab; }
-.console-icon-button--muted { border-color:rgba(248,113,113,.5); color:#fca5a5; }
-.console-label { color:#c4a875; font-size:8px; font-weight:900; letter-spacing:.14em; line-height:1.15; text-transform:uppercase; }
-.console-balance { color:#f3ead4; font-size:13px; line-height:1; }
-.console-play-amount { color:#f3d898; font-size:15px; line-height:1; }
-.console-stepper { display:flex; width:26px; height:26px; align-items:center; justify-content:center; border:1px solid rgba(218,178,101,.48); border-radius:7px; background:linear-gradient(145deg,rgba(48,38,23,.95),rgba(13,12,10,.98)); color:#f5dfae; font-size:17px; font-weight:800; line-height:1; transition:background .15s ease,transform .15s ease; }
-.console-stepper:hover:not(:disabled) { transform:scale(1.06); background:#60451d; }
-.console-stepper:disabled { opacity:.35; }
-.console-cost { color:#789496; font-size:7px; font-weight:700; letter-spacing:.04em; }
-.console-center { min-width:144px; }
-.console-spin { width:86px; height:86px; color:#fbe7b7; background:url('/assets/common/ethereal-gold/controls/spin-button.png') center / contain no-repeat; filter:drop-shadow(0 5px 9px rgba(0,0,0,.65)) drop-shadow(0 0 8px rgba(244,174,62,.16)); text-shadow:0 2px 4px #06111a,0 0 8px #07111a; }
-.console-spin:not(:disabled):hover { transform:translateY(-3px) scale(1.04); filter:drop-shadow(0 7px 11px rgba(0,0,0,.7)) drop-shadow(0 0 15px rgba(255,197,83,.48)); }
-.console-spin:disabled { cursor:not-allowed; filter:grayscale(.18) brightness(.78) drop-shadow(0 4px 7px rgba(0,0,0,.55)); }
-.console-spin--bonus { color:#fff1ce; filter:brightness(1.08) drop-shadow(0 5px 10px rgba(0,0,0,.65)) drop-shadow(0 0 13px rgba(255,207,114,.42)); }
-.console-spin-glint { display:none; }
-.console-spin-icon { display:flex; }
-.console-skip { min-width:72px; height:42px; padding:0 10px; border:1px solid rgba(255,224,162,.42); border-radius:12px; background:linear-gradient(160deg,rgba(52,37,21,.94),rgba(12,19,25,.96)); color:#ffedc1; font-size:8px; font-weight:1000; letter-spacing:.1em; box-shadow:inset 0 1px rgba(255,255,255,.08); }
-.console-skip:hover { border-color:#fff0c7; background:#392918; }
-.console-win-amount { color:#e8f0ee; font-size:15px; line-height:1.05; }
-.console-wallet,.console-win { border-color:rgba(226,189,119,.3) !important; border-radius:9px !important; background:linear-gradient(150deg,rgba(28,25,20,.9),rgba(7,7,8,.94)) !important; box-shadow:inset 0 1px rgba(255,255,255,.06),0 3px 10px rgba(0,0,0,.24); }
-.console-bet-line { border-color:rgba(226,189,119,.18) !important; }
-.console-auto,.console-stop { min-width:54px; height:34px; border:1px solid rgba(218,178,101,.4); border-radius:9px; background:linear-gradient(145deg,rgba(38,31,21,.96),rgba(10,10,11,.98)); color:#f0dfb8; font-size:9px; font-weight:1000; letter-spacing:.1em; box-shadow:inset 0 1px rgba(255,255,255,.07),0 3px 10px rgba(0,0,0,.25); }
-.console-auto:hover:not(:disabled) { border-color:rgba(255,220,143,.8); color:#ffe5a4; }
-.console-auto:disabled { opacity:.4; }
-.console-stop { border-color:rgba(248,113,113,.65); background:linear-gradient(145deg,#962d2d,#521a22); color:white; }
-
+/* Console styles live in app/scene.css */
 .win-celebration__rays { background:conic-gradient(from 0deg,transparent 0 8deg,rgba(255,207,104,.12) 12deg,transparent 20deg,transparent 38deg,rgba(86,203,208,.09) 44deg,transparent 52deg); mask-image:radial-gradient(ellipse at center,#000 0%,transparent 69%); }
 .win-celebration__horizon { background:linear-gradient(0deg,rgba(2,11,16,.8),transparent),radial-gradient(ellipse at 50% 100%,rgba(29,146,157,.24),transparent 68%); }
 .win-celebration__card { background:linear-gradient(150deg,rgba(14,35,44,.97),rgba(4,14,23,.985) 58%,rgba(35,23,12,.98)); box-shadow:0 28px 100px rgba(0,0,0,.78),0 0 48px rgba(242,178,71,.18),inset 0 1px rgba(255,255,255,.12); }
 .win-celebration__halo { background:radial-gradient(circle,rgba(255,195,79,.28),rgba(25,158,167,.12) 42%,transparent 70%); }
 .win-celebration__amount { border:1px solid rgba(237,208,147,.24); background:linear-gradient(100deg,rgba(0,0,0,.08),rgba(0,0,0,.42),rgba(0,0,0,.08)); box-shadow:inset 0 1px rgba(255,255,255,.07),0 10px 30px rgba(0,0,0,.2); }
 
-@media (max-width: 500px) {
-  .game-console { min-height:66px; gap:4px; padding:5px 7px; border-radius:13px; }
-  .game-console::before { border-radius:12px; }
-  .console-left,.console-right { gap:4px; }
-  .console-left { width:100%; }
-  .console-wallet { flex:1 1 0; max-width:none; }
-  .console-right { width:100%; }
-  .console-win { flex:1 1 0 !important; width:auto; }
-  .console-nav { display:none; }
-  .console-wallet { padding:3px 5px; border-radius:8px; }
-  .console-balance-line { align-items:center; }
-  .console-label { font-size:6px; letter-spacing:.08em; }
-  .console-balance { font-size:9px; }
-  .console-bet-line { margin-top:3px; padding-top:3px; }
-  .console-play-amount { font-size:11px; }
-  .console-stepper { width:18px; height:18px; border-radius:6px; font-size:13px; }
-  .console-cost { margin-top:2px; font-size:6px; }
-  .console-center { min-width:58px; gap:3px; }
-  .console-spin { width:54px; height:54px; }
-  .console-spin-icon svg { width:15px; height:15px; }
-  .console-spin > span:nth-child(3) { margin-top:1px; font-size:6px; letter-spacing:.12em; }
-  .console-spin > span:nth-child(4) { font-size:6px; }
-  .console-skip { min-width:44px; height:37px; padding:0 4px; border-radius:8px; font-size:7px; letter-spacing:.03em; }
-  .console-win { padding:4px 5px; border-radius:8px; }
-  .console-win-amount { font-size:9px; }
-  .console-actions { gap:3px; }
-  .console-auto,.console-stop { min-width:32px; height:26px; padding:0 4px; border-radius:7px; font-size:7px; letter-spacing:0; }
-  .console-icon-button { width:27px; height:27px; border-radius:8px; }
-  .console-icon-button svg { width:14px; height:14px; }
-}
 
 @media (max-width: 500px) and (max-height: 500px) {
   #game-surface .game-stage { inset:58px 0 58px; }

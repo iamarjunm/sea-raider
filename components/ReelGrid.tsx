@@ -6,6 +6,9 @@ import { motion } from 'motion/react';
 import { SymbolId, SYMBOL_METAS, PAYLINES, PaylineHit } from '../lib/slot-engine';
 import { formatMoney } from '../lib/currency';
 import ExplosionEffect, { ExplosionItem } from './common/ExplosionEffect';
+import HelmWheel from './scene/HelmWheel';
+import PaylineStream from './scene/PaylineStream';
+import LivingCaptain from './scene/LivingCaptain';
 
 interface ReelGridProps {
   grid: SymbolId[][];
@@ -24,6 +27,8 @@ interface ReelGridProps {
   captainRevealPhase?: 'cut' | 'scatter' | null;
   isTurbo?: boolean;
   currency?: string;
+  /** Force the frame lanterns to blaze (e.g. while a big-win celebration plays). */
+  lanternBlaze?: boolean;
 }
 
 // 12-symbol reel strip doubled to 24 for seamless infinite downward rolling
@@ -49,6 +54,7 @@ export default function ReelGrid({
   captainRevealPhase = null,
   isTurbo = false,
   currency = 'USD',
+  lanternBlaze = false,
 }: ReelGridProps) {
   // Active hit for connection detail
   const activeHit = activeHitIndex !== null ? winningHits[activeHitIndex] : null;
@@ -80,19 +86,33 @@ export default function ReelGrid({
   }, [winningHits, activeHitIndex]);
 
   const isAnticipationActive = landedScatterCount >= 2 && teaseReels.some((t) => t);
+  const anyReelSpinning = spinningReels.some((s) => s);
+  const isWinOnBoard = winningHits.length > 0 && !anyReelSpinning;
+  const lanternState = lanternBlaze || isWinOnBoard ? 'is-blazing' : isAnticipationActive ? 'is-tense' : '';
 
   return (
-    <div className="relative w-full max-w-[1600px] aspect-[16/9.6] flex items-center justify-center p-2 sm:p-4 select-none">
-      {/* Background Frame Image */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <Image
-          src="/assets/aistudio/frame_e548f7c1.webp"
-          alt="Slot Frame"
-          fill
-          priority
-          sizes="(max-width: 1600px) 100vw, 1600px"
-          className="object-contain"
-        />
+    <div className={`reel-cabinet relative w-full max-w-[1600px] aspect-[16/9.6] flex items-center justify-center p-2 sm:p-4 select-none ${isWinOnBoard ? 'reel-cabinet--win' : ''}`}>
+      {/* Frame: a turning helm behind the cut-out frame art, and two living lanterns */}
+      <div className="absolute inset-0 z-0 pointer-events-none flex items-center">
+        <div className="frame-box relative w-full aspect-[1672/941]">
+          <div className="helm-backing absolute" />
+          <HelmWheel isSpinning={anyReelSpinning} isTurbo={isTurbo} className="absolute left-1/2 top-[12.33%] w-[16.75%]" />
+          <Image
+            src="/assets/sea-raider/scene/frame-no-wheel.webp"
+            alt="Slot Frame"
+            fill
+            priority
+            sizes="(max-width: 1600px) 100vw, 1600px"
+            className="object-contain"
+          />
+          {(['left', 'right'] as const).map((side) => (
+            <div key={side} className={`frame-lantern frame-lantern--${side} ${lanternState}`}>
+              <span className="frame-lantern__halo" />
+              <span className="frame-lantern__rays" />
+              <span className="frame-lantern__core" />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* 5-Column Grid Interior positioned directly over the 5 window panes */}
@@ -102,14 +122,7 @@ export default function ReelGrid({
 
         {captainRevealCount !== null && (
           <div className="captain-scatter-reveal animate-captain-reveal absolute -left-[16%] -top-[24%] z-50 h-[145%] w-[48%] pointer-events-none" aria-hidden="true">
-            <Image
-              src="/assets/sea-raider/sword-captain.png"
-              alt=""
-              fill
-              sizes="(max-width: 640px) 110px, 240px"
-              className={`object-contain object-bottom ${captainRevealPhase === 'cut' ? 'captain-portrait-strike' : ''}`}
-              priority
-            />
+            <LivingCaptain isStriking className={captainRevealPhase === 'cut' ? 'captain-portrait-strike' : ''} />
             <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-300/80 bg-[#130b05]/90 px-2 py-1 text-[8px] sm:text-xs font-black tracking-wide text-amber-200 shadow-lg">
               {captainRevealCount} SCATTERS ABOARD
             </div>
@@ -151,46 +164,27 @@ export default function ReelGrid({
           );
         })()}
 
-        {/* Clean, Subtle, Professional Winning Line Trace */}
-        {currentLinePath && !spinningReels.some((s) => s) && (
-          <motion.svg
-            className="absolute inset-0 z-30 w-full h-full pointer-events-none"
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="none"
-          >
-            <motion.polyline
-              points={currentLinePath
-                .map(([c, r]) => {
-                  const x = (c + 0.5) * 200; // 100, 300, 500, 700, 900
-                  const y = (r + 0.5) * 200; // 100, 300, 500
-                  return `${x},${y}`;
-                })
-                .join(' ')}
-              fill="none"
-              stroke="#fef08a"
-              strokeWidth="4"
-              strokeOpacity="0.85"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: [0, 1, 1] }}
-              transition={{ duration: 0.65, ease: 'easeInOut' }}
-              style={{ filter: 'drop-shadow(0 0 8px rgba(74, 222, 214, 0.7))' }}
-            />
-          </motion.svg>
+        {/* Winning line: a stream of sea water pouring through the paying symbols */}
+        {currentLinePath && activeHit && !anyReelSpinning && (
+          <PaylineStream
+            line={currentLinePath}
+            hitCells={activeHit.positions}
+            streamKey={`${activeHitIndex}-${activeHit.lineIndex}-${activeHit.winAmount}`}
+          />
         )}
 
-        {/* Connection Payout Badge (Shows for each connection what it pays!) */}
-        {activeHit && !spinningReels.some((s) => s) && (
+        {/* Connection payout plaque */}
+        {activeHit && !anyReelSpinning && (
           <motion.div
             key={`${activeHit.lineIndex}-${activeHit.winAmount}`}
-            initial={{ opacity: 0, y: 9, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: [1.04, 1] }}
-            transition={{ duration: 0.32, ease: 'easeOut' }}
-            className="absolute -bottom-5 sm:-bottom-7 left-1/2 -translate-x-1/2 z-40 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg bg-[#07131d]/95 border border-[#d8b66f] text-[#f6e8c9] font-bold text-[10px] sm:text-xs shadow-[0_6px_24px_rgba(0,0,0,0.8),0_0_16px_rgba(74,222,214,0.24)] tracking-wide flex items-center gap-1.5 sm:gap-2 whitespace-nowrap pointer-events-none">
-            <span className="text-[#72d8ce] font-black tracking-wider">LINE {String(activeHit.lineIndex).padStart(2, '0')}</span>
-            <span>{activeHit.count}x {SYMBOL_METAS[activeHit.symbol]?.name || activeHit.symbol}</span>
-            <span className="text-[#8be3b2] font-extrabold tabular-nums">+{formatMoney(activeHit.winAmount, currency)}</span>
+            initial={{ opacity: 0, y: 12, scale: 0.86 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 520, damping: 26 }}
+            className="payout-plaque absolute -bottom-5 sm:-bottom-7 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-2.5 whitespace-nowrap pointer-events-none"
+          >
+            <span className="payout-plaque__line">LINE {String(activeHit.lineIndex).padStart(2, '0')}</span>
+            <span className="payout-plaque__combo">{activeHit.count}× {SYMBOL_METAS[activeHit.symbol]?.name || activeHit.symbol}</span>
+            <span className="payout-plaque__amount tabular-nums">+{formatMoney(activeHit.winAmount, currency)}</span>
           </motion.div>
         )}
 
@@ -272,10 +266,8 @@ export default function ReelGrid({
                         animate={isWinning ? { scale: [1, 1.055, 1] } : { scale: 1 }}
                         transition={isWinning ? { duration: 0.55, ease: 'easeOut', repeat: 1 } : { duration: 0.18 }}
                       >
-                        {/* Elegant winning highlight frame */}
-                        {isWinning && (
-                          <div className="absolute inset-1 rounded-lg border border-amber-300 bg-amber-400/20 shadow-[0_0_12px_rgba(245,158,11,0.6)] pointer-events-none" />
-                        )}
+                        {/* Winning cell: a lit pool of sea water under the symbol */}
+                        {isWinning && <div className="win-cell-pool absolute inset-1 pointer-events-none" />}
 
                         {/* Subtle Scatter glow during anticipation */}
                         {isScatter && (

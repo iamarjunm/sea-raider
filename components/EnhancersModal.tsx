@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { PlayMode, MODE_CONFIGS } from '../lib/slot-engine';
 import { formatMoney, toSocialText } from '../lib/currency';
-import StudioCardFrame from './common/StudioCardFrame';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface EnhancersModalProps {
   isOpen: boolean;
@@ -116,6 +116,15 @@ const CUSTOM_CARDS: CustomCardDef[] = [
   },
 ];
 
+const MODE_ACCENT: Partial<Record<PlayMode, string>> = {
+  bonus_chance: '#2ccfd1',
+  super_bonus: '#a77bff',
+  pirates_chance: '#e2483b',
+  feature_spin: '#4f9dff',
+  unknown_bonus: '#e26bf0',
+  unknown_extreme: '#36dcef',
+};
+
 const FEATURE_ART: Record<PlayMode, { src: string; label: string }> = {
   base: { src: '/assets/sea-raider/scatter.png', label: 'Galleon' },
   bonus_chance: { src: '/assets/sea-raider/scatter.png', label: 'Galleon' },
@@ -187,184 +196,157 @@ export default function EnhancersModal({
     onClose();
   };
 
+  const accentFor = (mode: PlayMode) => MODE_ACCENT[mode] ?? '#2ccfd1';
+
   return (
-    <div className="bonus-modal fixed inset-0 z-50 flex flex-col justify-between p-3 sm:p-6 select-none animate-fadeIn bg-slate-950/75">
-      {/* Feature mode selector heading */}
-      <div className="relative w-full flex items-center justify-between z-30 pt-1 sm:pt-3">
-        <div className="w-12 sm:w-16" />
+    <div className="bonus-modal feature-harbor fixed inset-0 z-50 flex flex-col justify-between p-3 sm:p-6 select-none">
+      {/* Heading */}
+      <div className="relative w-full flex items-center justify-between z-30 pt-1 sm:pt-2">
+        <div className="w-10 sm:w-14" />
 
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-2xl sm:text-5xl md:text-6xl font-black text-slate-100 tracking-tight">
-            {toSocialText('FEATURE MODES', isSocial)}
-          </h1>
-          <p className="text-[9px] sm:text-sm text-slate-400 font-medium tracking-wide mt-0.5 uppercase">
-            {toSocialText('Choose a mode once, then spin or run autoplay at its cost per spin', isSocial)}
-          </p>
-        </div>
-
-        <button
-          onClick={onClose}
-          aria-label={toSocialText('Close Buy Bonus', isSocial)}
-          className="relative w-9 h-9 sm:w-14 sm:h-14 hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+        <motion.div
+          className="flex flex-col items-center text-center"
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
-          <Image
-            src="/assets/aistudio/x_f55ae377.webp"
-            alt="Close"
-            fill
-            priority
-            sizes="56px"
-            className="object-contain"
-          />
+          <p className="feature-harbor__kicker">{toSocialText('Choose your voyage', isSocial)}</p>
+          <h1 className="feature-harbor__title">{toSocialText('Feature Modes', isSocial)}</h1>
+          <p className="feature-harbor__sub">
+            {toSocialText('Pick a mode once, then spin or run autoplay at its cost per spin', isSocial)}
+          </p>
+        </motion.div>
+
+        <button onClick={onClose} aria-label={toSocialText('Close Buy Bonus', isSocial)} className="ship-seal-close ship-seal-close--large">
+          <X size={22} strokeWidth={3} />
         </button>
       </div>
 
-      {/* Center Carousel: Left Arrow + 3 Custom Cards + Right Arrow */}
-      <div className="bonus-carousel relative w-full max-w-7xl mx-auto my-auto z-20 flex items-center justify-center gap-2 sm:gap-6 px-2">
-        {/* Left Arrow Button */}
-        <button
-          onClick={handlePrevPage}
-          aria-label="Previous Cards"
-          className="relative w-8 h-8 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-lg sm:text-2xl font-bold transition-all cursor-pointer z-30"
-        >
-          ❮
+      {/* Carousel */}
+      <div className="bonus-carousel relative w-full max-w-7xl mx-auto my-auto z-20 flex items-center justify-center gap-2 sm:gap-6 px-1 sm:px-2">
+        <button onClick={handlePrevPage} aria-label="Previous Cards" className="brass-arrow">
+          <ChevronLeft size={24} strokeWidth={3} />
         </button>
 
-        {/* 3 Custom Cards Visible at a Time */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 md:gap-8 items-center justify-center">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 md:gap-8 items-stretch justify-center">
           <AnimatePresence mode="popLayout">
             {currentCards.map((card, idx) => {
               const config = MODE_CONFIGS[card.mode];
               const isCardActive = activeMode === card.mode;
               const cost = betLevel * config.costMultiplier;
+              const accent = accentFor(card.mode);
 
               return (
                 <motion.div
                   key={card.mode}
                   data-mode={card.mode}
-                  initial={{ opacity: 0, scale: 0.88, y: 25 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.88, y: -25 }}
-                  transition={{ duration: 0.28, delay: idx * 0.05 }}
+                  initial={{ opacity: 0, y: 30, rotate: idx % 2 ? 1.5 : -1.5 }}
+                  animate={{ opacity: 1, y: 0, rotate: idx === 1 ? 0.4 : idx === 0 ? -0.8 : 0.9 }}
+                  exit={{ opacity: 0, y: -24 }}
+                  whileHover={{ y: -8, rotate: 0, scale: 1.025 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 30, delay: idx * 0.04 }}
                   onClick={() => handleCardClick(card.mode)}
-                  className={`bonus-card-item group relative flex flex-col items-center cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                    isCardActive ? 'scale-[1.02]' : ''
-                  }`}
+                  className={`bounty-card group relative flex cursor-pointer flex-col ${isCardActive ? 'bounty-card--active' : ''}`}
+                  style={{ '--accent': accent } as React.CSSProperties}
                 >
-                  {/* Active Indicator Badge */}
-                  {isCardActive && (
-                    <div className="absolute -top-3.5 z-30 px-4 py-1 bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs sm:text-sm rounded-full shadow-[0_0_20px_#10b981] animate-bounce">
-                      ACTIVE
-                    </div>
-                  )}
+                  <span className="bounty-card__pin" aria-hidden="true" />
+                  <span className="bounty-card__seal" aria-label={`${config.costMultiplier} times the base bet`}>{card.multiplierBadge}</span>
+                  {isCardActive && <span className="bounty-card__active">ACTIVE</span>}
 
-                  {/* Original in-game card art keeps the buy screen coherent with Sea Raider. */}
-                  <StudioCardFrame
-                    tint={card.mode === 'unknown_bonus' ? 'rgba(80, 8, 80, .34)' : card.mode === 'unknown_extreme' ? 'rgba(0, 95, 105, .32)' : card.mode === 'feature_spin' ? 'rgba(0, 60, 110, .3)' : 'rgba(2, 35, 42, .3)'}
-                    className={`studio-buy-card relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-[370px] min-h-[250px] sm:min-h-[310px] rounded-2xl p-3 sm:p-4 flex flex-col justify-between overflow-hidden bg-gradient-to-br ${card.accentGradient} border ${
-                      isCardActive
-                        ? 'border-amber-300 ring-2 ring-amber-400/50 shadow-xl'
-                        : 'border-slate-700 hover:border-slate-500 shadow-lg'
-                    }`}
-                  >
-                    <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full border border-amber-200/20 bg-amber-300/10 blur-[1px]" />
-                    <div className="relative flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="feature-card-art relative h-12 w-12 sm:h-[58px] sm:w-[58px]">
-                          <Image src={FEATURE_ART[card.mode].src} alt={FEATURE_ART[card.mode].label} fill sizes="58px" className="object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,.65)]" />
-                        </div>
-                        <div className="text-left"><div className="text-[8px] font-black tracking-[.2em] text-cyan-100/65">SEA RAIDER · FEATURE</div><div className="mt-1 text-[9px] font-bold tracking-wider text-amber-100/65">{FEATURE_ART[card.mode].label.toUpperCase()}</div></div>
-                      </div>
-                      <span className="rounded-full border border-amber-100/35 bg-black/45 px-2.5 py-1 text-xs font-black text-amber-100">{card.multiplierBadge}</span>
+                  <div className="bounty-card__porthole">
+                    <span className="bounty-card__porthole-glow" aria-hidden="true" />
+                    <div className="bounty-card__art">
+                      <Image src={FEATURE_ART[card.mode].src} alt={FEATURE_ART[card.mode].label} fill sizes="120px" className="object-contain" />
                     </div>
-                    <div className="relative mt-2 text-center">
-                      <div className="text-base sm:text-xl font-black tracking-widest text-white">{card.title}</div>
-                      <div className="mt-1 text-[9px] sm:text-[10px] font-bold tracking-[.18em] text-amber-200/75">{card.subtitle}</div>
+                  </div>
+
+                  <div className="bounty-card__title">{card.title}</div>
+                  <div className="bounty-card__subtitle">{card.subtitle}</div>
+
+                  <ul className="bounty-card__ledger">
+                    {card.odds.map((item) => (
+                      <li key={item.label} className={item.highlight ? 'is-highlight' : ''}>
+                        <span>{item.label}</span>
+                        <i aria-hidden="true" />
+                        <b>{item.value}</b>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="bounty-card__footer">
+                    <div>
+                      <div className="bounty-card__cost-label">{toSocialText('Cost per spin', isSocial)}</div>
+                      <div className="bounty-card__cost tabular-nums">{formatMoney(cost, currency)}</div>
                     </div>
-                    <div className="relative my-2 space-y-1 rounded-xl border border-white/10 bg-black/35 p-2">
-                      {card.odds.map((item) => <div key={item.label} className="flex justify-between gap-2 text-[9px] sm:text-[10px]"><span className="text-slate-300">{item.label}</span><span className={item.highlight ? 'font-black text-amber-300' : 'font-bold text-white'}>{item.value}</span></div>)}
-                    </div>
-                    <div className="relative flex items-center justify-between gap-2 border-t border-white/10 pt-2">
-                      <div className="min-w-0">
-                        <div className="text-[9px] uppercase tracking-wider text-slate-400">
-                          {toSocialText('Activation cost', isSocial)}
-                        </div>
-                      </div>
-                      <span className="shrink-0 rounded-md bg-amber-400 px-2 py-1 text-xs sm:text-sm font-bold text-slate-950">
-                        {formatMoney(cost, currency)}
-                      </span>
-                    </div>
-                  </StudioCardFrame>
+                    <span className="bounty-card__cta">{isCardActive ? 'Turn off' : 'Activate'}</span>
+                  </div>
                 </motion.div>
               );
             })}
           </AnimatePresence>
         </div>
 
-        {/* Right Arrow Button */}
-        <button
-          onClick={handleNextPage}
-          aria-label="Next Cards"
-          className="relative w-8 h-8 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-lg sm:text-2xl font-bold transition-all cursor-pointer z-30"
-        >
-          ❯
+        <button onClick={handleNextPage} aria-label="Next Cards" className="brass-arrow">
+          <ChevronRight size={24} strokeWidth={3} />
         </button>
       </div>
 
-      {/* Bottom Carousel Indicator Dots */}
-      <div className="relative z-20 flex items-center justify-center gap-2 pb-2">
+      {/* Page markers */}
+      <div className="relative z-20 flex items-center justify-center gap-2.5 pb-2">
         {Array.from({ length: totalPages }).map((_, pIdx) => (
           <button
             key={pIdx}
             onClick={() => setCurrentPage(pIdx)}
             aria-label={`Page ${pIdx + 1}`}
-            className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
-              currentPage === pIdx
-                ? 'bg-amber-400 w-8 shadow-[0_0_12px_rgba(245,158,11,0.9)]'
-                : 'bg-amber-900/60 hover:bg-amber-700'
-            }`}
+            className={`harbor-dot ${currentPage === pIdx ? 'is-active' : ''}`}
           />
         ))}
       </div>
 
-      {/* Confirmation Dialog for modes costing more than 2x base bet */}
-      {confirmBuyMode && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-[420px] rounded-3xl bg-gradient-to-b from-[#1c130b] via-[#120b06] to-[#0a0503] border-2 border-amber-500 p-6 flex flex-col items-center text-center shadow-[0_0_50px_rgba(0,0,0,0.95)]">
-            <h3 className="text-xl sm:text-2xl font-black text-amber-300 tracking-wide uppercase drop-shadow-md">
-              CONFIRM FEATURE MODE
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 mt-2 font-medium">
-              {toSocialText('Are you sure you want to start', isSocial)}{' '}
-              <span className="text-amber-300 font-black">
-                {MODE_CONFIGS[confirmBuyMode].name}
-              </span>{' '}
-              {toSocialText('for', isSocial)}{' '}
-              <span className="text-emerald-400 font-black">
-                {formatMoney(
-                  betLevel * MODE_CONFIGS[confirmBuyMode].costMultiplier,
-                  currency
-                )}
-              </span>
-              ?
-            </p>
+      {/* Confirmation for modes costing more than 2x base bet */}
+      <AnimatePresence>
+        {confirmBuyMode && (
+          <motion.div
+            className="ship-overlay fixed inset-0 z-60 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <motion.div
+              className="ship-dialog w-full max-w-[420px] p-6 flex flex-col items-center text-center"
+              initial={{ scale: 0.9, y: 14 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 10 }}
+              transition={{ type: 'spring', stiffness: 460, damping: 30 }}
+            >
+              <p className="ship-kicker">{toSocialText('Feature mode', isSocial)}</p>
+              <h3 className="ship-heading mt-1 text-3xl">Hoist the colours?</h3>
+              <p className="ship-body mt-3 text-sm">
+                {toSocialText('Start', isSocial)}{' '}
+                <strong className="text-[#7a1d10]">{MODE_CONFIGS[confirmBuyMode].name}</strong>{' '}
+                {toSocialText('at', isSocial)}{' '}
+                <strong className="text-[#1d5c3c] tabular-nums">
+                  {formatMoney(betLevel * MODE_CONFIGS[confirmBuyMode].costMultiplier, currency)}
+                </strong>{' '}
+                {toSocialText('per spin?', isSocial)}
+              </p>
 
-            <div className="flex items-center gap-4 mt-6 w-full">
-              <button
-                onClick={() => setConfirmBuyMode(null)}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={handleConfirmPurchase}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 text-black font-black text-xs uppercase tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-              >
-                CONFIRM &amp; ACTIVATE
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center gap-3 mt-6 w-full">
+                <button onClick={() => setConfirmBuyMode(null)} className="ship-button ship-button--ghost flex-1">
+                  Cancel
+                </button>
+                <button onClick={handleConfirmPurchase} className="ship-button flex-1">
+                  Confirm &amp; activate
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -17,6 +17,9 @@ import StudioLoadingScreen from '../components/common/StudioLoadingScreen';
 import OpeningModal from '../components/OpeningModal';
 import ReplayScreen from '../components/ReplayScreen';
 import { ExplosionItem } from '../components/common/ExplosionEffect';
+import SeaBackdrop from '../components/scene/SeaBackdrop';
+import FeatureBuyButton from '../components/scene/FeatureBuyButton';
+import CaptainCameo, { CaptainCameoState } from '../components/scene/CaptainCameo';
 import {
   SymbolId,
   PlayMode,
@@ -113,6 +116,17 @@ export default function SlotGamePage() {
   const [isSuperTurbo, setIsSuperTurbo] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [mysteryText, setMysteryText] = useState<string | null>(null);
+
+  // Captain swings in on decent (non big-win) wins.
+  const [captainCameo, setCaptainCameo] = useState<CaptainCameoState | null>(null);
+  const showCaptainCameo = useCallback((amount: number, multiple: number) => {
+    setCaptainCameo((prev) => ({ id: (prev?.id ?? 0) + 1, amount, multiple }));
+  }, []);
+  useEffect(() => {
+    if (!captainCameo) return;
+    const t = setTimeout(() => setCaptainCameo(null), 2900);
+    return () => clearTimeout(t);
+  }, [captainCameo]);
 
   // 4. Particle Explosions
   const [explosions, setExplosions] = useState<ExplosionItem[]>([]);
@@ -240,6 +254,9 @@ export default function SlotGamePage() {
   const currentBet = betLevels[currentBetIndex] || 1.0;
   const currentModeConfig = MODE_CONFIGS[activeMode];
   const totalSpinCost = currentBet * currentModeConfig.costMultiplier;
+  // Lanterns blaze while a win is on the board, and hardest during celebrations.
+  const isWinShowing = winningHits.length > 0 && lastWin > 0;
+  const sceneGlow = isCelebrationOpen ? 1 : isWinShowing ? (lastWin >= totalSpinCost * 10 ? 0.9 : 0.6) : 0;
 
   // Add Particle Explosion
   const triggerExplosion = useCallback(
@@ -577,7 +594,7 @@ export default function SlotGamePage() {
       // Set all 5 reels spinning
       setSpinningReels([true, true, true, true, true]);
       setTeaseReels([false, false, false, false, false]);
-      soundManager.playSpinClick(1.0);
+      soundManager.startReelSpin(isTurbo);
 
       // Stage one scatter that is already part of the booked result. The reel
       // briefly lands without it, then the captain reveals it with a sword slash.
@@ -633,6 +650,7 @@ export default function SlotGamePage() {
 
         // Check Scatters landed on this column
         const colScatters = landedColumn.filter((s) => s === 'SCATTER').length;
+        soundManager.playReelStop(reelIdx);
         if (colScatters > 0) {
           currentScatters += colScatters;
           setLandedScatterCount(currentScatters);
@@ -643,8 +661,6 @@ export default function SlotGamePage() {
           } else {
             soundManager.playScatterLand(currentScatters);
           }
-        } else {
-          soundManager.playReelStop(reelIdx);
         }
 
         // BUILDBUP ACTIVATION: Once 2 Scatter symbols land, tease remaining reels!
@@ -702,6 +718,9 @@ export default function SlotGamePage() {
         setLastWin(outcome.bonusTriggered ? 0 : outcome.totalWin);
         setWinningHits(outcome.lineHits);
         setWildMultiplier(outcome.wildMultiplier);
+        if (!outcome.bonusTriggered && !isBigWinOutcome && outcome.totalWin >= spinCost * 3) {
+          showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
+        }
 
         if (outcome.bonusTriggered) {
           let bonusLineWins = (outcome.bonusSpinFrames || []).reduce((sum, frame) => {
@@ -720,7 +739,7 @@ export default function SlotGamePage() {
 
         for (let idx = 0; idx < outcome.lineHits.length; idx++) {
           setActiveHitIndex(idx);
-          soundManager.playCoin();
+          soundManager.playLineWin(idx);
           const stepTime = pace(isTurbo ? 280 : 650);
           await new Promise((res) => setTimeout(res, stepTime));
         }
@@ -868,6 +887,7 @@ export default function SlotGamePage() {
       pendingBonus,
       isCelebrationOpen,
       stopAutoplay,
+      showCaptainCameo,
     ]
   );
 
@@ -944,7 +964,7 @@ export default function SlotGamePage() {
         setBonusWildCount(surge.wildCount);
         setIsSpinning(true);
         setSpinningReels([true, true, true, true, true]);
-        soundManager.playSpinClick(1.1);
+        soundManager.startReelSpin(isTurbo);
         const surgeResult = evaluateBonusSpinFrame(surge.frame, currentBet);
         for (let reel = 0; reel < 5; reel++) {
           await new Promise((res) => setTimeout(res, pace(isTurbo ? 200 : 480)));
@@ -967,7 +987,7 @@ export default function SlotGamePage() {
         let finalWinShown = false;
         for (let index = 0; index < surgeHits.length; index++) {
           setActiveHitIndex(index);
-          soundManager.playCoin();
+          soundManager.playLineWin(index);
           setLastWin(advanceBonusPayoutProgress(
             surgeHits[index].winAmount,
             bonusPayoutProgressRef.current,
@@ -1034,7 +1054,7 @@ export default function SlotGamePage() {
     if (skipBonusNowRef.current) return;
 
     setSpinningReels([true, true, true, true, true]);
-    soundManager.playSpinClick(1.1);
+    soundManager.startReelSpin(isTurbo);
 
     // Compute free spin result
     const recordedFrame = bonusSpinFramesRef.current.shift();
@@ -1106,7 +1126,7 @@ export default function SlotGamePage() {
     setWinningHits(lineHitsToShow);
     for (let idx = 0; idx < lineHitsToShow.length; idx++) {
       setActiveHitIndex(idx);
-      soundManager.playCoin();
+      soundManager.playLineWin(idx);
       setLastWin(advanceBonusPayoutProgress(
         lineHitsToShow[idx].winAmount,
         bonusPayoutProgressRef.current,
@@ -1124,6 +1144,7 @@ export default function SlotGamePage() {
     const spinWin = freeRes.spinWin;
     const isBig = spinWin >= currentBet * 30;
     soundManager.playWin(isBig);
+    if (!isBig && spinWin >= currentBet * 5) showCaptainCameo(spinWin, spinWin / currentBet);
 
     if (isBig) {
       await new Promise((res) => setTimeout(res, pace(2000)));
@@ -1152,7 +1173,7 @@ export default function SlotGamePage() {
     } else {
       setTimeout(() => runNextFreeSpinRef.current(), 500);
     }
-  }, [currentBet, isTurbo, sessionParams.rgsUrl, sessionParams.sessionId, settlePausedSimulation]);
+  }, [currentBet, isTurbo, sessionParams.rgsUrl, sessionParams.sessionId, settlePausedSimulation, showCaptainCameo]);
 
   // Keep runNextFreeSpinRef synced
   useEffect(() => {
@@ -1205,6 +1226,7 @@ export default function SlotGamePage() {
     bonusSpinsRemainingRef.current = 0;
     setBonusSpinsRemaining(0);
     isBonusSpinExecutingRef.current = false;
+    soundManager.stopReelLoop();
     setIsSpinning(false);
     setSpinningReels([false, false, false, false, false]);
     setTeaseReels([false, false, false, false, false]);
@@ -1541,18 +1563,8 @@ export default function SlotGamePage() {
       id="game-surface"
       className="relative w-screen h-screen overflow-hidden flex flex-col justify-between select-none bg-black"
     >
-      {/* Background Cinematic Pirate Artwork */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/assets/sea-raider/night-watch-background.png"
-          alt="Sea Raider Ocean Galleon Deck"
-          fill
-          priority
-          sizes="100vw"
-          className="sea-background object-cover object-center"
-        />
-        <div className="sea-atmosphere absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35 pointer-events-none" />
-      </div>
+      {/* Living backdrop: rolling ocean, ship sway and flickering deck lanterns */}
+      <SeaBackdrop glow={sceneGlow} />
 
       {/* Feature mode selector */}
       {isEnhancersOpen ? (
@@ -1620,19 +1632,12 @@ export default function SlotGamePage() {
 
           {/* Mobile-Only Top Action Bar for feature modes and Turbo */}
           <div className="game-mobile-actions sm:hidden relative z-20 flex items-center justify-between px-3 w-full max-w-[440px] mx-auto -my-1 shrink-0">
-            <button
+            <FeatureBuyButton
+              compact
               onClick={() => setIsEnhancersOpen(true)}
-              aria-label={toSocialText('Select Feature Mode', sessionParams.isSocial)}
-              className={`mobile-buy-bonus active:scale-95 transition-transform ${sessionParams.isSocial ? 'mobile-buy-bonus--social' : ''}`}
-            >
-              <Image src={sessionParams.isSocial ? '/assets/sea-raider/play-feature-wordmark.svg' : '/assets/sea-raider/get-bonus-wordmark.svg'} alt={sessionParams.isSocial ? 'Play Feature' : 'Get Bonus'} fill sizes="(max-width: 500px) 164px, 144px" className="object-contain drop-shadow-[0_3px_12px_rgba(0,0,0,0.9)]" />
-            </button>
-
-            {activeMode !== 'base' && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-500 border border-amber-200 text-black font-black text-[9px] uppercase tracking-wider shadow">
-                {MODE_CONFIGS[activeMode].name.split(' ')[0]} ON
-              </span>
-            )}
+              isSocial={sessionParams.isSocial}
+              activeModeName={activeMode !== 'base' ? MODE_CONFIGS[activeMode].name.split(' ')[0] : null}
+            />
 
             <button
               onClick={cycleTurbo}
@@ -1661,33 +1666,22 @@ export default function SlotGamePage() {
           <section className={`game-stage relative z-10 flex-1 flex items-center justify-center px-1 sm:px-4 md:px-6 w-full max-h-[74vh] min-h-0 gap-2 sm:gap-4 md:gap-6 ${isBonusActive ? 'game-stage--wild-surge' : ''}`}>
             {/* Desktop left feature-mode button */}
             <div className="hidden sm:flex flex-col items-center justify-center shrink-0">
-              <button
+              <FeatureBuyButton
                 onClick={() => setIsEnhancersOpen(true)}
-                title={toSocialText('Select a Feature Mode', sessionParams.isSocial)}
-                aria-label={toSocialText('Select Feature Mode', sessionParams.isSocial)}
-                className={`relative w-20 sm:w-28 md:w-36 aspect-[16/9] hover:scale-110 active:scale-95 transition-all drop-shadow-[0_0_20px_rgba(245,158,11,0.7)] hover:drop-shadow-[0_0_35px_rgba(251,191,36,1)] z-20 cursor-pointer animate-pulse ${sessionParams.isSocial ? 'mobile-buy-bonus--social' : ''}`}
-              >
-                <Image src={sessionParams.isSocial ? '/assets/sea-raider/play-feature-wordmark.svg' : '/assets/sea-raider/get-bonus-wordmark.svg'} alt={sessionParams.isSocial ? 'Play Feature' : 'Get Bonus'} fill sizes="(max-width: 640px) 80px, 144px" className="object-contain" />
-              </button>
-              <span className="text-[9px] sm:text-[11px] font-black text-amber-300 uppercase tracking-widest mt-1 hidden sm:block drop-shadow-md">
-                {toSocialText('FEATURE MODES', sessionParams.isSocial)}
-              </span>
-              {activeMode !== 'base' && (
-                <div className="mt-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/90 to-yellow-400/90 border border-amber-200 text-black font-black text-[9px] tracking-wider uppercase shadow-[0_0_12px_rgba(245,158,11,0.85)] animate-pulse">
-                  {MODE_CONFIGS[activeMode].name} ACTIVE
-                </div>
-              )}
+                isSocial={sessionParams.isSocial}
+                activeModeName={activeMode !== 'base' ? MODE_CONFIGS[activeMode].name : null}
+              />
               <button
                 onClick={cycleTurbo}
                 title={isSuperTurbo ? 'Ultra Turbo · click to turn off' : isTurbo ? 'Turbo · click for Ultra Turbo' : 'Turbo off · click for Turbo'}
                 aria-label={isSuperTurbo ? 'Switch turbo off' : isTurbo ? 'Enable ultra turbo' : 'Enable turbo'}
-                className={`relative mt-2 h-10 w-10 sm:h-12 sm:w-12 hover:scale-110 active:scale-95 transition-all z-20 cursor-pointer ${isTurbo ? 'drop-shadow-[0_0_18px_rgba(251,191,36,.9)]' : 'opacity-80 hover:opacity-100'}`}
+                className={`turbo-toggle mt-4 ${isTurbo ? 'turbo-toggle--on' : ''} ${isSuperTurbo ? 'turbo-toggle--ultra' : ''}`}
               >
-                <Image src={isTurbo ? '/assets/aistudio/spin_speed_on_1eeebfcd.webp' : '/assets/aistudio/spin_speed_off_12664d81.webp'} alt="Turbo Spin" fill sizes="48px" className="object-contain" />
+                <span className="turbo-toggle__icon relative h-9 w-9 sm:h-10 sm:w-10">
+                  <Image src={isTurbo ? '/assets/aistudio/spin_speed_on_1eeebfcd.webp' : '/assets/aistudio/spin_speed_off_12664d81.webp'} alt="" fill sizes="40px" className="object-contain" />
+                </span>
+                <span className="turbo-toggle__label">{isSuperTurbo ? 'ULTRA TURBO' : isTurbo ? 'TURBO' : 'TURBO OFF'}</span>
               </button>
-              <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-wider ${isTurbo ? 'text-amber-300' : 'text-slate-400'}`}>
-                {isSuperTurbo ? 'ULTRA TURBO' : isTurbo ? 'TURBO' : 'TURBO OFF'}
-              </span>
             </div>
 
             {/* Central 5x3 Reel Grid Frame */}
@@ -1720,6 +1714,7 @@ export default function SlotGamePage() {
             captainRevealPhase={captainReveal?.phase ?? null}
                 isTurbo={isTurbo}
                 currency={sessionParams.currency}
+                lanternBlaze={isCelebrationOpen}
               />
             </div>
 
@@ -1757,6 +1752,7 @@ export default function SlotGamePage() {
               bonusTotalSpins={bonusTotalSpins}
               bonusFinale={isBonusActive && isSpinning && bonusSpinsRemaining === 0 && wildSurgeFinaleActive}
               isSimulationPaused={Boolean(simulationRun?.isPaused || simulationRun?.isRunning)}
+              isTurbo={isTurbo}
               onSkipBonus={() => {
                 setSkipBonusHasBigWin(bonusPayoutBigWinRef.current);
                 setIsSkipBonusConfirmOpen(true);
@@ -1788,13 +1784,13 @@ export default function SlotGamePage() {
       )}
 
       {isSkipBonusConfirmOpen && isBonusActive && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="skip-bonus-title">
-          <div className="w-full max-w-sm rounded-2xl border border-amber-400/70 bg-slate-950 p-5 text-center shadow-[0_0_40px_rgba(245,158,11,.3)]">
-            <h2 id="skip-bonus-title" className="text-lg font-black text-amber-300">SKIP REMAINING BONUS SPINS?</h2>
-            <p className="mt-2 text-sm text-slate-200">{skipBonusHasBigWin ? 'A big win is already booked for this bonus and will still be shown.' : 'Skipping now ends the remaining bonus spins and shows the round total.'}</p>
-            <div className="mt-5 flex gap-3">
-              <button onClick={() => setIsSkipBonusConfirmOpen(false)} className="flex-1 rounded-lg border border-slate-600 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-800">KEEP PLAYING</button>
-              <button onClick={handleConfirmSkipBonus} className="flex-1 rounded-lg bg-amber-400 px-3 py-2 text-sm font-black text-black hover:bg-amber-300">SKIP BONUS</button>
+        <div className="ship-overlay fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="skip-bonus-title">
+          <div className="ship-dialog ship-dialog-enter w-full max-w-sm p-6 text-center">
+            <h2 id="skip-bonus-title" className="ship-heading text-2xl sm:text-3xl">Skip the remaining spins?</h2>
+            <p className="ship-body mt-3 text-sm">{skipBonusHasBigWin ? 'A big win is already booked for this bonus and will still be shown.' : 'Skipping now ends the remaining bonus spins and shows the round total.'}</p>
+            <div className="mt-6 flex gap-3">
+              <button onClick={() => setIsSkipBonusConfirmOpen(false)} className="ship-button ship-button--ghost flex-1">Keep sailing</button>
+              <button onClick={handleConfirmSkipBonus} className="ship-button flex-1">Skip bonus</button>
             </div>
           </div>
         </div>
@@ -1861,6 +1857,7 @@ export default function SlotGamePage() {
           isTotalWin={isCelebrationTotal}
         />
       )}
+      <CaptainCameo cameo={isCelebrationOpen ? null : captainCameo} currency={sessionParams.currency} />
       {wildSurgeAnnouncement && (
         <WildSurgeAnnouncement
           wildCount={wildSurgeAnnouncement.wildCount}
