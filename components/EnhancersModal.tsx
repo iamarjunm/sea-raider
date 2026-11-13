@@ -33,7 +33,7 @@ const CUSTOM_CARDS: CustomCardDef[] = [
     mode: 'bonus_chance',
     title: 'BONUS CHANCE',
     multiplierBadge: '5×',
-    subtitle: '10% FEATURE TRIGGER · SCATTER MIX ON TRIGGER',
+    subtitle: '10% TRIGGER · 3-SCATTER RETURNS AT LEAST 5× COST',
     themeColor: 'border-teal-400 shadow-[0_0_35px_rgba(45,212,191,0.5)]',
     accentGradient: 'from-[#0b2421] via-[#041412] to-[#020b0a]',
     odds: [
@@ -47,7 +47,7 @@ const CUSTOM_CARDS: CustomCardDef[] = [
     mode: 'super_bonus',
     title: 'SUPER BONUS CHANCE',
     multiplierBadge: '7×',
-    subtitle: '5.5% FEATURE TRIGGER · SCATTER MIX ON TRIGGER',
+    subtitle: '5.5% TRIGGER · 3-SCATTER RETURNS AT LEAST 7× COST',
     themeColor: 'border-purple-400 shadow-[0_0_35px_rgba(192,132,252,0.5)]',
     accentGradient: 'from-[#200b33] via-[#120420] to-[#08020e]',
     odds: [
@@ -89,7 +89,7 @@ const CUSTOM_CARDS: CustomCardDef[] = [
     mode: 'unknown_bonus',
     title: 'UNKNOWN BONUS',
     multiplierBadge: '250×',
-    subtitle: '100% FEATURE GUARANTEED',
+    subtitle: '100% FEATURE · ETHEREAL 6-SCATTER RETURNS ≥8,000×',
     themeColor: 'border-fuchsia-400 shadow-[0_0_40px_rgba(232,121,249,0.55)]',
     accentGradient: 'from-[#2a0833] via-[#18031e] to-[#09010c]',
     odds: [
@@ -104,7 +104,7 @@ const CUSTOM_CARDS: CustomCardDef[] = [
     mode: 'unknown_extreme',
     title: 'UNKNOWN EXTREME',
     multiplierBadge: '500×',
-    subtitle: 'MYSTERY OUTCOME DISTRIBUTION',
+    subtitle: '15% FEATURE · ETHEREAL 6-SCATTER RETURNS ≥8,000×',
     themeColor: 'border-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.6)]',
     accentGradient: 'from-[#04282c] via-[#02171a] to-[#01090a]',
     odds: [

@@ -368,7 +368,7 @@ export default function PaytableModal({ isOpen, onClose, isSocial }: PaytableMod
                   </div>
                   <div>
                     <strong className="text-fuchsia-400">4. Ethereal Cataclysm (6 Scatters - Mythic Jackpot):</strong>
-                    <p className="text-slate-400">{toSocialText(`Awards 10 Ethereal Spins. Starting range: ${startRangeLabel(6)}. Available starting stops: ${startStopsLabel(6)}. Each reel can receive a Wild. Six-scatter rounds return at least 5,000× the base play and can reach 50,000×.`, isSocial)}</p>
+                    <p className="text-slate-400">{toSocialText(`Awards 10 Ethereal Spins. Starting range: ${startRangeLabel(6)}. Available starting stops: ${startStopsLabel(6)}. Each reel can receive a Wild. Six-scatter rounds return at least 8,000× the base play and can reach 50,000×.`, isSocial)}</p>
                   </div>
                   <div className="rounded-lg border border-amber-400/20 bg-black/20 p-3 text-slate-300">
                     <strong className="text-amber-200">Wild Surge finale:</strong> Every Wild symbol appearing on a bonus spin adds 1 to the meter; Wilds do not stick between spins. At the end of the bonus, each charged meter row adds a full horizontal Wild line to one final surge spin (maximum 3 rows). The meter threshold is 5 Wilds per row in Curse, 20 in Ghost, 45 in Legend, and 30 in Ethereal. The row positions are selected by the precomputed game result.

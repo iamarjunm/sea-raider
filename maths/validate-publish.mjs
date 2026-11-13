@@ -83,8 +83,8 @@ for (const mode of index.modes) {
       if (scatterCount === 4) fourScatterWeight += Number(weight);
       if (scatterCount === 6) {
         sixScatterWeight += Number(weight);
-        if (payoutX < 5_000 || payoutX > 50_000) {
-          throw new Error(`${mode.name}: 6-scatter payout ${payoutX}x is outside 5,000x–50,000x`);
+        if (payoutX < 8_000 || payoutX > 50_000) {
+          throw new Error(`${mode.name}: 6-scatter payout ${payoutX}x is outside 8,000x–50,000x`);
         }
       }
       if (mode.name === 'feature_spin' && !event.board.some((reel) => reel.includes('WILD'))) {

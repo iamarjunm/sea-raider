@@ -5,7 +5,7 @@
       "cost": 1.0,
       "rtp": 0.967,
       "hitRate": 0.550032,
-      "volatility": 54.4851,
+      "volatility": 54.4936,
       "cvarRel": 378.3582,
       "rtpFrom40xCost": 0.5347
     },
@@ -13,15 +13,15 @@
       "cost": 5.0,
       "rtp": 0.967,
       "hitRate": 0.720023,
-      "volatility": 15.0444,
+      "volatility": 15.0685,
       "cvarRel": 254.9507,
       "rtpFrom40xCost": 0.2457
     },
     "super_bonus": {
       "cost": 7.0,
       "rtp": 0.967,
-      "hitRate": 0.567829,
-      "volatility": 14.4382,
+      "hitRate": 0.558984,
+      "volatility": 14.4387,
       "cvarRel": 236.6875,
       "rtpFrom40xCost": 0.6351
     },
@@ -29,15 +29,15 @@
       "cost": 25.0,
       "rtp": 0.967,
       "hitRate": 0.55014,
-      "volatility": 8.0773,
-      "cvarRel": 136.0335,
-      "rtpFrom40xCost": 0.6529
+      "volatility": 8.2717,
+      "cvarRel": 146.9024,
+      "rtpFrom40xCost": 0.65
     },
     "feature_spin": {
       "cost": 10.0,
       "rtp": 0.967,
       "hitRate": 0.686569,
-      "volatility": 10.2307,
+      "volatility": 10.2334,
       "cvarRel": 96.4545,
       "rtpFrom40xCost": 0.0924
     },
@@ -45,17 +45,17 @@
       "cost": 250.0,
       "rtp": 0.967,
       "hitRate": 1.0,
-      "volatility": 3.7568,
-      "cvarRel": 76.4884,
+      "volatility": 3.8211,
+      "cvarRel": 82.6132,
       "rtpFrom40xCost": 0.0672
     },
     "unknown_extreme": {
       "cost": 500.0,
       "rtp": 0.967,
-      "hitRate": 0.360156,
-      "volatility": 3.1032,
-      "cvarRel": 40.26,
-      "rtpFrom40xCost": 0.0016
+      "hitRate": 0.342264,
+      "volatility": 3.3084,
+      "cvarRel": 40.4361,
+      "rtpFrom40xCost": 0.0141
     }
   }
 }

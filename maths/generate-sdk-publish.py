@@ -28,9 +28,11 @@ WILD_SURGE_MAX_LINES = 3
 BONUS_PAYOUT_SCALE = 1.0
 BONUS_START_MIN_BY_SCATTERS = {3: 1, 4: 10, 5: 20, 6: 50}
 BONUS_MULTIPLIER_MAX = 50_000
+ETHEREAL_MINIMUM_PAYOUT = 8_000.0
 
 # payoutMultiplier uses hundredths of base bet: 100 == 1.00x
 SYMBOLS = ["H1", "H2", "H3", "H4", "L1", "L2", "L3", "L4", "L5", "WILD", "SCATTER"]
+LINE_VARIANT_SYMBOLS = [symbol for symbol in SYMBOLS if symbol != "SCATTER"]
 LOWS = ["L1", "L2", "L3", "L4", "L5"]
 HIGHS = ["H1", "H2", "H3", "H4"]
 PAYTABLE = {
@@ -124,6 +126,171 @@ def line_total(board: list[list[str]], cost: float, multiplier: float = 1.0) -> 
     return total * multiplier
 
 
+LINE_VARIANT_CATALOGS: dict[tuple[str, float, float], dict[int, list[list[list[str]]]]] = {}
+LINE_VARIANT_CURSOR: dict[tuple[str, float, float, int], int] = {}
+
+
+def line_variant_catalog(mode: str, cost: float, multiplier: float) -> dict[int, list[list[list[str]]]]:
+    """Collect valid line-paying screens across a broad range of exact paytable totals."""
+    key = (mode, cost, multiplier)
+    if key in LINE_VARIANT_CATALOGS:
+        return LINE_VARIANT_CATALOGS[key]
+
+    seed = sum((index + 1) * ord(char) for index, char in enumerate(mode))
+    seed += int(cost * 100) * 17 + int(multiplier * 100) * 31 + 20261113
+    rng = random.Random(seed)
+    catalog: dict[int, list[list[list[str]]]] = {}
+    for index in range(80_000):
+        board = [[rng.choice(LINE_VARIANT_SYMBOLS) for _ in range(3)] for _ in range(5)]
+        if index % 2:
+            line = rng.choice(PAYLINES)
+            symbol = rng.choice(HIGHS + LOWS)
+            count = rng.choice((3, 4, 5))
+            for reel, row in line[:count]:
+                board[reel][row] = symbol
+            if count < 5:
+                reel, row = line[count]
+                board[reel][row] = rng.choice([candidate for candidate in HIGHS + LOWS if candidate != symbol])
+        if mode == "feature_spin" and not any("WILD" in reel for reel in board):
+            cell = rng.randrange(15)
+            board[cell // 3][cell % 3] = "WILD"
+        payout = x_to_payout(line_total(board, cost, multiplier))
+        if payout <= 0:
+            continue
+        choices = catalog.setdefault(payout, [])
+        if len(choices) < 8:
+            choices.append(board)
+
+    if not catalog:
+        raise ValueError(f"{mode}: could not find valid line-paying presentation boards")
+    LINE_VARIANT_CATALOGS[key] = catalog
+    return catalog
+
+
+def diversify_line_outcomes(
+    mode: str,
+    cost: float,
+    max_win: int,
+    rows: list[tuple[int, int, int]],
+    events: list[dict],
+) -> None:
+    """Add many valid line-pay amounts while preserving each Wild-multiplier group's mean."""
+    if mode == "feature_spin":
+        return
+
+    source_rows = list(rows)
+    source_events = list(events)
+    group_indices: dict[float, list[int]] = {}
+    for index, (_, weight, payout) in enumerate(source_rows):
+        event = source_events[index]["events"][0]
+        if weight > 0 and payout > 0 and not event["bonusTriggered"]:
+            group_indices.setdefault(float(event["wildMultiplier"]), []).append(index)
+
+    spread_by_mode = {
+        "base": 20.0,
+        "bonus_chance": 15.0,
+        "super_bonus": 15.0,
+        "pirates_chance": 10.0,
+        "feature_spin": 20.0,
+        "unknown_extreme": 10.0,
+    }
+    target_variants = 12
+    replaced_indices: set[int] = set()
+    replacements: list[tuple[int, int, dict]] = []
+
+    for multiplier, indices in group_indices.items():
+        catalog = line_variant_catalog(mode, cost, multiplier)
+        original_weight = sum(source_rows[index][1] for index in indices)
+        original_return = sum(source_rows[index][1] * source_rows[index][2] for index in indices)
+        original_payouts = {source_rows[index][2] for index in indices}
+        for index in indices:
+            payout = source_rows[index][2]
+            screens = catalog.setdefault(payout, [])
+            board = source_events[index]["events"][0]["board"]
+            if board not in screens:
+                screens.append(board)
+        catalog = {payout: boards for payout, boards in catalog.items() if payout > 0}
+
+        mode_limit = x_to_payout(min(max_win, cost * spread_by_mode.get(mode, 10.0)))
+        available = sorted(payout for payout in catalog if payout <= max(mode_limit, max(original_payouts)))
+        if len(available) < 2:
+            continue
+
+        count = min(target_variants, len(available))
+        selected_indices = sorted({round(i * (len(available) - 1) / (count - 1)) for i in range(count)})
+        selected = [available[index] for index in selected_indices]
+        min_payout, max_payout = available[0], available[-1]
+
+        # Keep a modest share on the extra payout levels. The remaining mass
+        # sits on the closest paytable stops around the original group average.
+        seed_weight = 0
+        for fraction in (0.05, 0.025, 0.0125, 0.00625, 0.003125, 0.0015625):
+            candidate = max(1, int(original_weight * fraction / count))
+            remainder_weight = original_weight - candidate * count
+            remainder_return = original_return - candidate * sum(selected)
+            if remainder_weight > 0 and min_payout <= remainder_return / remainder_weight <= max_payout:
+                seed_weight = candidate
+                break
+        if seed_weight <= 0:
+            continue
+
+        distribution: dict[int, int] = {payout: seed_weight for payout in selected}
+        remainder_weight = original_weight - seed_weight * count
+        remainder_return = original_return - seed_weight * sum(selected)
+        remainder_average = remainder_return / remainder_weight
+        lower = max((payout for payout in available if payout <= remainder_average), default=min_payout)
+        upper = min((payout for payout in available if payout >= remainder_average), default=max_payout)
+        if lower == upper:
+            distribution[lower] = distribution.get(lower, 0) + remainder_weight
+        else:
+            upper_weight = round((remainder_return - remainder_weight * lower) / (upper - lower))
+            upper_weight = min(remainder_weight, max(0, upper_weight))
+            lower_weight = remainder_weight - upper_weight
+            distribution[lower] = distribution.get(lower, 0) + lower_weight
+            distribution[upper] = distribution.get(upper, 0) + upper_weight
+
+        group_replacements = []
+        for payout, weight in sorted(distribution.items()):
+            if weight <= 0:
+                continue
+            screens = catalog.get(payout) or []
+            if not screens:
+                # Original line boards are always valid catalog fallbacks.
+                source = next(index for index in indices if source_rows[index][2] == payout)
+                screens = [source_events[source]["events"][0]["board"]]
+            screen_count = min(4, len(screens))
+            screen_base_weight, screen_extra_weight = divmod(weight, screen_count)
+            cursor_key = (mode, cost, multiplier, payout)
+            cursor = LINE_VARIANT_CURSOR.get(cursor_key, 0)
+            source_event = source_events[indices[0]]["events"][0]
+            for screen_index in range(screen_count):
+                screen_weight = screen_base_weight + (1 if screen_index < screen_extra_weight else 0)
+                if screen_weight <= 0:
+                    continue
+                board = screens[(cursor + screen_index) % len(screens)]
+                event = {
+                    **source_event,
+                    "board": board,
+                    "result": "small_win" if payout < 100 else "line_win",
+                    "payoutX": round(payout / 100.0, 4),
+                }
+                group_replacements.append((screen_weight, payout, event))
+            LINE_VARIANT_CURSOR[cursor_key] = cursor + screen_count
+
+        if not group_replacements:
+            continue
+        replaced_indices.update(indices)
+        replacements.extend(group_replacements)
+
+    kept_rows = [row for index, row in enumerate(source_rows) if index not in replaced_indices]
+    kept_events = [event for index, event in enumerate(source_events) if index not in replaced_indices]
+    rows[:] = kept_rows
+    events[:] = kept_events
+    for weight, payout, event in replacements:
+        rows.append((len(rows), weight, payout))
+        events.append({"id": len(events), "events": [event], "payoutMultiplier": payout})
+
+
 def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> float:
     """Fit a non-decreasing sequence using the published multiplier ladder."""
     frames = event.get("bonusSpinFrames") or []
@@ -201,7 +368,7 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
         return adjusted
 
     cap = 50_000 if event["scatterCount"] == 6 else 25_000
-    floor = 5_000 if event["scatterCount"] == 6 else 1_500 if event["scatterCount"] == 5 else 0.1
+    floor = ETHEREAL_MINIMUM_PAYOUT if event["scatterCount"] == 6 else 1_500 if event["scatterCount"] == 5 else 0.1
     min_allowed = int(math.ceil(floor / 0.2 - 1e-8))
     max_allowed = int(math.floor(cap / 0.2 + 1e-8))
     chosen: tuple[list[int], int] | None = None
@@ -1108,9 +1275,10 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                 target_band = (6.0 if tier == "curse" else 32.0) * cost
                 order = sorted(range(len(remaining)), key=lambda i: abs(remaining[i][0] - target_band))
             elif name == "super_bonus" and tier in ("curse", "ghost"):
-                # Keep Super Bonus's high trigger/scatter frequency inside its
-                # RTP budget by favoring lower booked payouts for common tiers.
-                target_band = (4.0 if tier == "curse" else 6.0) * cost
+                # Give the frequent 3-scatter Super Bonus tier a meaningful
+                # chance to clear its 7x buy cost; preserve the higher scatter
+                # tiers as the main path to outsized wins.
+                target_band = (10.0 if tier == "curse" else 6.0) * cost
                 order = sorted(range(len(remaining)), key=lambda i: abs(remaining[i][0] - target_band))
             elif name == "base" and tier in ("curse", "ghost"):
                 # Keep the common 3-scatter feature in a satisfying mid-win
@@ -1136,7 +1304,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
 
         # Enforce guaranteed round totals and tier-specific caps, then rescale
         # the non-jackpot rows together so RTP stays inside the published target.
-        floors = {"legend": 1_500.0, "hidden": 1_500.0, "ethereal": 5_000.0}
+        floors = {"legend": 1_500.0, "hidden": 1_500.0, "ethereal": ETHEREAL_MINIMUM_PAYOUT}
         caps = {"legend": 25_000.0, "hidden": 25_000.0, "ethereal": 50_000.0}
         jackpot_values = [px for px, _ in jackpot_ladder(name, max_win)]
 
@@ -1191,22 +1359,28 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             meta["wildSurge"] = make_wild_surge(meta["bonusType"], meta["bonusSpinFrames"])
         if not meta["bonusTriggered"]:
             if payout > 0:
-                if line_total(meta["board"], cost, meta["wildMultiplier"]) <= 0:
+                multiplier = meta["wildMultiplier"]
+                if line_total(meta["board"], cost, multiplier) <= 0:
                     force_line_win(meta["board"], "L1", 3)
-                payout = x_to_payout(line_total(meta["board"], cost, meta["wildMultiplier"]))
+                payout = x_to_payout(line_total(meta["board"], cost, multiplier))
                 if payout <= 0:
                     raise ValueError(f"{name}: paying outcome {i} rounds below the SDK minimum payout")
+                meta["payoutX"] = round(payout / 100.0, 4)
             else:
                 meta["board"] = nonwinning_board(name, cost, meta["wildMultiplier"])
-            meta["payoutX"] = round(payout / 100.0, 4)
-        rows.append((i, weight, payout))
+                meta["payoutX"] = 0.0
+        rows.append((len(rows), weight, payout))
         events.append(
             {
-                "id": i,
+                "id": len(events),
                 "events": [meta],
                 "payoutMultiplier": payout,
             }
         )
+
+    # Spread ordinary line-win probability over a wider range of screens and
+    # paytable totals while retaining the same total line return and hit rate.
+    diversify_line_outcomes(name, cost, max_win, rows, events)
 
     # Restore the target RTP by adjusting precomputed feature round values.
     # The visible boards are calibrated to those values as real line wins below.
@@ -1223,7 +1397,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                 continue
             bonus_type = event["bonusType"]
             scatter_count = event["scatterCount"]
-            floor = 5_000.0 if scatter_count == 6 else 1_500.0 if scatter_count == 5 else 0.1
+            floor = ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500.0 if scatter_count == 5 else 0.1
             cap = 50_000.0 if bonus_type == "ethereal" else 25_000.0
             amount = min(cap, max(floor, (original_payout / 100.0) * scale))
             scaled_rows.append((sim_id, weight, x_to_payout(amount)))
@@ -1345,7 +1519,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             if not event["bonusTriggered"] or payout <= 0 or payout in jackpot_units or weight <= 0:
                 continue
             scatter_count = event["scatterCount"]
-            floor = x_to_payout(5_000 if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1)
+            floor = x_to_payout(ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1)
             cap = x_to_payout(50_000 if scatter_count == 6 else 25_000 if scatter_count == 5 else max_win)
             step = round(delta_units / (weight * 10)) * 10
             adjusted = payout + step
@@ -1377,7 +1551,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             visible_total = calibrate_bonus_frame_multipliers(event, expected_x)
             adjusted_payout = x_to_payout(visible_total)
             scatter_count = event["scatterCount"]
-            floor = 5_000 if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1
+            floor = ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1
             cap = 50_000 if scatter_count == 6 else 25_000
             if visible_total + 1e-8 < floor or visible_total > cap + 1e-8:
                 raise ValueError(

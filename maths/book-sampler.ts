@@ -111,7 +111,50 @@ export function bookEntryToSpinResult(
 
 /** Randomize visible stops without changing the booked line payout or feature. */
 function randomizePresentationBoard(result: SpinResult, mode: PlayMode, baseBet: number): SpinResult {
-  if (result.bonusTriggered) return result;
+  if (result.bonusTriggered) {
+    // Bonus entries are precomputed so their payout is stable, but repeating
+    // the exact same reveal board makes the game look like it has only a few
+    // outcomes. The feature result is already booked and has no line-hit list,
+    // so vary its symbol layout while preserving its scatter count and feature.
+    const board: SymbolId[][] = generateRandomGrid().map((reel) =>
+      reel.map((symbol) => symbol === 'SCATTER' || symbol === 'WILD' ? 'L1' : symbol)
+    );
+    const targetScatters = Math.max(0, Math.min(6, result.scatterCount));
+    const cells = Array.from({ length: 15 }, (_, index) => index);
+    for (let index = cells.length - 1; index > 0; index -= 1) {
+      const swap = Math.floor(Math.random() * (index + 1));
+      [cells[index], cells[swap]] = [cells[swap], cells[index]];
+    }
+
+    const usedReels = new Set<number>();
+    if (targetScatters > 0) {
+      for (const cell of cells) {
+        const reel = Math.floor(cell / 3);
+        if (usedReels.has(reel)) continue;
+        board[reel][cell % 3] = 'SCATTER';
+        usedReels.add(reel);
+        if (usedReels.size === Math.min(targetScatters, 5)) break;
+      }
+    }
+    if (targetScatters === 6) {
+      const extraCell = cells.find((cell) => board[Math.floor(cell / 3)][cell % 3] !== 'SCATTER');
+      if (extraCell !== undefined) board[Math.floor(extraCell / 3)][extraCell % 3] = 'SCATTER';
+    }
+
+    // Feature Spin's reveal always includes its guaranteed Wild.
+    if (mode === 'feature_spin' && !board.some((reel) => reel.includes('WILD'))) {
+      const cell = cells.find((candidate) => board[Math.floor(candidate / 3)][candidate % 3] !== 'SCATTER');
+      if (cell !== undefined) board[Math.floor(cell / 3)][cell % 3] = 'WILD';
+    }
+
+    const evaluated = evaluateGrid(board, baseBet * getPublishedModeCost(mode), result.wildMultiplier);
+    return {
+      ...result,
+      grid: board,
+      scatterCount: targetScatters,
+      scatterPositions: evaluated.scatterPositions,
+    };
+  }
 
   const wager = baseBet * getPublishedModeCost(mode);
   const wantsScatterNearMiss = mode === 'bonus_chance' || mode === 'unknown_extreme';
