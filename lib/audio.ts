@@ -529,6 +529,19 @@ class SoundManager {
     } catch {}
   }
 
+  /** Cutlass cut: a sharp whoosh through the air and a ringing steel "shing". */
+  public playSwordSlash() {
+    if (!this.canPlaySfx()) return;
+    const now = this.ctx!.currentTime;
+    try {
+      this.noiseHit(now, { freq: 4200, q: 1.4, gain: 0.34, decay: 0.24, sweepTo: 520 });
+      this.noiseHit(now + 0.02, { freq: 1200, q: 0.8, gain: 0.18, decay: 0.2, type: 'lowpass', sweepTo: 300 });
+      this.tone(now + 0.05, 2637, { type: 'triangle', gain: 0.09, decay: 0.55 });
+      this.tone(now + 0.05, 3951, { gain: 0.05, decay: 0.4 });
+      this.tone(now + 0.05, 5274, { gain: 0.025, decay: 0.3 });
+    } catch {}
+  }
+
   public playExplosion() {
     if (this.isMasterMuted || this.isSfxMuted) return;
     this.init();

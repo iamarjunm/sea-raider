@@ -19,7 +19,7 @@ import ReplayScreen from '../components/ReplayScreen';
 import { ExplosionItem } from '../components/common/ExplosionEffect';
 import SeaBackdrop from '../components/scene/SeaBackdrop';
 import FeatureBuyButton from '../components/scene/FeatureBuyButton';
-import CaptainCameo, { CaptainCameoState } from '../components/scene/CaptainCameo';
+import CaptainCameo, { CaptainCameoState, CAMEO_DURATION_MS } from '../components/scene/CaptainCameo';
 import {
   SymbolId,
   PlayMode,
@@ -124,7 +124,7 @@ export default function SlotGamePage() {
   }, []);
   useEffect(() => {
     if (!captainCameo) return;
-    const t = setTimeout(() => setCaptainCameo(null), 2900);
+    const t = setTimeout(() => setCaptainCameo(null), CAMEO_DURATION_MS);
     return () => clearTimeout(t);
   }, [captainCameo]);
 
@@ -720,7 +720,9 @@ export default function SlotGamePage() {
         setLastWin(outcome.bonusTriggered ? 0 : outcome.totalWin);
         setWinningHits(outcome.lineHits);
         setWildMultiplier(outcome.wildMultiplier);
-        if (!outcome.bonusTriggered && !isBigWinOutcome && outcome.totalWin >= spinCost * 3) {
+        // The swashbuckler only celebrates real profit: the win must beat what the spin cost.
+        // (Big wins bring him onto the celebration screen instead.)
+        if (!outcome.bonusTriggered && !isBigWinOutcome && outcome.totalWin > spinCost) {
           showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
         }
         if (outcome.bonusTriggered) {
@@ -765,6 +767,7 @@ export default function SlotGamePage() {
           setCelebrationAmount(outcome.totalWin);
           celebrationPendingRef.current = true;
           setIsCelebrationOpen(true);
+          showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
           soundManager.playWin(true);
         } else if (!outcome.bonusTriggered) {
           soundManager.playWin(false);
@@ -1042,6 +1045,7 @@ export default function SlotGamePage() {
         setIsCelebrationTotal(true);
         setCelebrationAmount(finalBonusTotal);
         setIsCelebrationOpen(true);
+        if (finalBonusTotal > 0) showCaptainCameo(finalBonusTotal, finalBonusTotal / currentBet);
         settlePausedSimulation('Bonus round complete. Resume the remaining simulation spins.');
       }, 1000);
       return;
@@ -1145,7 +1149,8 @@ export default function SlotGamePage() {
     const spinWin = freeRes.spinWin;
     const isBig = spinWin >= currentBet * 30;
     soundManager.playWin(isBig);
-    if (!isBig && spinWin >= currentBet * 5) showCaptainCameo(spinWin, spinWin / currentBet);
+    // Free spins cost nothing, so only bring him out when a spin pays at least the base bet.
+    if (spinWin >= currentBet) showCaptainCameo(spinWin, spinWin / currentBet);
     if (isBig) {
       await new Promise((res) => setTimeout(res, pace(2000)));
       if (skipBonusNowRef.current) return;
@@ -1857,7 +1862,7 @@ export default function SlotGamePage() {
           isTotalWin={isCelebrationTotal}
         />
       )}
-      <CaptainCameo cameo={isCelebrationOpen ? null : captainCameo} currency={sessionParams.currency} />
+      <CaptainCameo cameo={captainCameo} elevated={isCelebrationOpen} currency={sessionParams.currency} />
       {wildSurgeAnnouncement && (
         <WildSurgeAnnouncement
           wildCount={wildSurgeAnnouncement.wildCount}
