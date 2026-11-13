@@ -364,7 +364,7 @@ export default function PaytableModal({ isOpen, onClose, isSocial }: PaytableMod
                   </div>
                   <div>
                     <strong className="text-red-400">3. Pirate Legend Jackpot (5 Scatters - Mega Bonus):</strong>
-                    <p className="text-slate-400">{toSocialText(`Awards 15 Free Spins. Starting range: ${startRangeLabel(5)}. Available starting stops: ${startStopsLabel(5)}. One Wild lands on each of reels 2, 3, and 4 per spin. Five-scatter rounds return at least 1,500× the base play and can reach 25,000×.`, isSocial)}</p>
+                    <p className="text-slate-400">{toSocialText(`Awards 15 Free Spins. Starting range: ${startRangeLabel(5)}. Available starting stops: ${startStopsLabel(5)}. One Wild lands on each of reels 2, 3, and 4 per spin. Standard five-scatter rounds return at least 1,500× the base play; Unknown Extreme five-scatter rounds at least 750×. Both can reach 25,000×.`, isSocial)}</p>
                   </div>
                   <div>
                     <strong className="text-fuchsia-400">4. Ethereal Cataclysm (6 Scatters - Mythic Jackpot):</strong>

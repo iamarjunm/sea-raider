@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 import random
+import copy
 from pathlib import Path
 
 import zstandard as zstd
@@ -29,6 +30,17 @@ BONUS_PAYOUT_SCALE = 1.0
 BONUS_START_MIN_BY_SCATTERS = {3: 1, 4: 10, 5: 20, 6: 50}
 BONUS_MULTIPLIER_MAX = 50_000
 ETHEREAL_MINIMUM_PAYOUT = 8_000.0
+UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM = 750.0
+
+
+def bonus_payout_floor(mode: str, scatter_count: int) -> float:
+    if scatter_count == 6:
+        return ETHEREAL_MINIMUM_PAYOUT
+    if scatter_count == 5:
+        if mode == "unknown_extreme":
+            return UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM
+        return 1_500.0
+    return 0.1
 
 # payoutMultiplier uses hundredths of base bet: 100 == 1.00x
 SYMBOLS = ["H1", "H2", "H3", "H4", "L1", "L2", "L3", "L4", "L5", "WILD", "SCATTER"]
@@ -291,6 +303,115 @@ def diversify_line_outcomes(
         events.append({"id": len(events), "events": [event], "payoutMultiplier": payout})
 
 
+def smooth_unknown_extreme_bands(
+    rows: list[tuple[int, int, int]], events: list[dict]
+) -> None:
+    """Redistribute 4% of five-scatter mass from 1,000–2,000x into 750x and 3,000x."""
+    requested_to_move = round(0.04 * TOTAL_WEIGHT)
+    sources = [
+        index for index, (_, weight, payout) in enumerate(rows)
+        if weight > 0 and 100_000 <= payout < 200_000
+        and events[index]["events"][0].get("scatterCount") == 5
+        and events[index]["events"][0].get("bonusTriggered")
+    ]
+    available = sum(rows[index][1] for index in sources)
+    total_to_move = min(requested_to_move, available)
+    remaining = total_to_move
+    sources.sort(key=lambda index: rows[index][2])
+    additions = []
+    for index in sources:
+        sim_id, weight, payout = rows[index]
+        moved = min(weight, remaining)
+        if moved <= 0:
+            continue
+        # Split each moved share so the weighted payout remains equal to its
+        # original 1,000–2,000x result, while creating both target bands.
+        low_weight = round(moved * (3_000 - payout) / (3_000 - 750))
+        low_weight = min(moved, max(0, low_weight))
+        high_weight = moved - low_weight
+        source_event = events[index]["events"][0]
+        for variant_weight, variant_payout in ((low_weight, 75000), (high_weight, 300000)):
+            if variant_weight <= 0:
+                continue
+            variant_event = copy.deepcopy(source_event)
+            variant_event["payoutX"] = variant_payout / 100.0
+            additions.append((variant_weight, variant_payout, variant_event))
+        rows[index] = (sim_id, weight - moved, payout)
+        remaining -= moved
+        if remaining <= 0:
+            break
+    if remaining > 0:
+        raise ValueError(
+            f"unknown_extreme: insufficient five-scatter mass to smooth the requested bands "
+            f"(moved {(total_to_move - remaining) / TOTAL_WEIGHT:.3%}, target {requested_to_move / TOTAL_WEIGHT:.3%})"
+        )
+    for weight, payout, event in additions:
+        rows.append((len(rows), weight, payout))
+        events.append({"id": len(events), "events": [event], "payoutMultiplier": payout})
+
+
+def cap_unknown_extreme_ten_k_frequency(
+    rows: list[tuple[int, int, int]], events: list[dict]
+) -> None:
+    """Meet the 1-in-100 10,000x risk limit without changing RTP or scatter odds."""
+    threshold = x_to_payout(10_000)
+    tail_weight = sum(weight for _, weight, payout in rows if payout >= threshold)
+    max_tail_weight = TOTAL_WEIGHT // 100
+    excess = tail_weight - max_tail_weight
+    if excess <= 0:
+        return
+
+    sources = sorted(
+        (i for i, (_, weight, payout) in enumerate(rows)
+         if weight > 0 and payout >= threshold
+         and events[i]["events"][0].get("scatterCount") == 6),
+        key=lambda i: rows[i][2],
+    )
+    recipients = sorted(
+        (i for i, (_, weight, payout) in enumerate(rows)
+         if weight > 0 and payout < threshold
+         and events[i]["events"][0].get("scatterCount") == 6),
+        key=lambda i: rows[i][2],
+        reverse=True,
+    )
+
+    for source in sources:
+        source_id, source_weight, source_payout = rows[source]
+        move = min(excess, source_weight)
+        if move <= 0:
+            continue
+        for recipient in recipients:
+            recipient_id, recipient_weight, recipient_payout = rows[recipient]
+            if recipient == source or recipient_payout >= source_payout:
+                continue
+            donors = sorted(
+                (i for i, (_, weight, payout) in enumerate(rows)
+                 if weight > 0 and payout < recipient_payout
+                 and events[i]["events"][0].get("scatterCount") == 6
+                 and i not in (source, recipient)),
+                key=lambda i: rows[i][2],
+                reverse=True,
+            )
+            for donor in donors:
+                donor_id, donor_weight, donor_payout = rows[donor]
+                # Replace some lower payout mass with the recipient payout to
+                # offset the return lost by moving high-tail mass below 10,000x.
+                difference = recipient_payout - donor_payout
+                required_y = round(move * (source_payout - recipient_payout) / difference)
+                if required_y <= donor_weight:
+                    rows[source] = (source_id, source_weight - move, source_payout)
+                    rows[recipient] = (recipient_id, recipient_weight + move + required_y, recipient_payout)
+                    rows[donor] = (donor_id, donor_weight - required_y, donor_payout)
+                    residual = (
+                        move * (source_payout - recipient_payout)
+                        - required_y * difference
+                    )
+                    if abs(residual) > max(1, int(TARGET_RTP * 500 * 100 * TOTAL_WEIGHT * 1e-8)):
+                        raise ValueError(f"unknown_extreme: 10,000x frequency adjustment exceeded RTP tolerance ({residual})")
+                    return
+    raise ValueError("unknown_extreme: cannot meet the 10,000x frequency limit within the six-scatter payout rows")
+
+
 def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> float:
     """Fit a non-decreasing sequence using the published multiplier ladder."""
     frames = event.get("bonusSpinFrames") or []
@@ -368,7 +489,7 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
         return adjusted
 
     cap = 50_000 if event["scatterCount"] == 6 else 25_000
-    floor = ETHEREAL_MINIMUM_PAYOUT if event["scatterCount"] == 6 else 1_500 if event["scatterCount"] == 5 else 0.1
+    floor = bonus_payout_floor(event.get("mode", ""), event["scatterCount"])
     min_allowed = int(math.ceil(floor / 0.2 - 1e-8))
     max_allowed = int(math.floor(cap / 0.2 + 1e-8))
     chosen: tuple[list[int], int] | None = None
@@ -1305,6 +1426,8 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
         # Enforce guaranteed round totals and tier-specific caps, then rescale
         # the non-jackpot rows together so RTP stays inside the published target.
         floors = {"legend": 1_500.0, "hidden": 1_500.0, "ethereal": ETHEREAL_MINIMUM_PAYOUT}
+        if name == "unknown_extreme":
+            floors["hidden"] = UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM
         caps = {"legend": 25_000.0, "hidden": 25_000.0, "ethereal": 50_000.0}
         jackpot_values = [px for px, _ in jackpot_ladder(name, max_win)]
 
@@ -1381,7 +1504,8 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     # Spread ordinary line-win probability over a wider range of screens and
     # paytable totals while retaining the same total line return and hit rate.
     diversify_line_outcomes(name, cost, max_win, rows, events)
-
+    if name == "unknown_extreme":
+        smooth_unknown_extreme_bands(rows, events)
     # Restore the target RTP by adjusting precomputed feature round values.
     # The visible boards are calibrated to those values as real line wins below.
     jackpot_units = {x_to_payout(px) for px, _ in jackpot_ladder(name, max_win)}
@@ -1397,7 +1521,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                 continue
             bonus_type = event["bonusType"]
             scatter_count = event["scatterCount"]
-            floor = ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500.0 if scatter_count == 5 else 0.1
+            floor = bonus_payout_floor(name, scatter_count)
             cap = 50_000.0 if bonus_type == "ethereal" else 25_000.0
             amount = min(cap, max(floor, (original_payout / 100.0) * scale))
             scaled_rows.append((sim_id, weight, x_to_payout(amount)))
@@ -1519,7 +1643,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             if not event["bonusTriggered"] or payout <= 0 or payout in jackpot_units or weight <= 0:
                 continue
             scatter_count = event["scatterCount"]
-            floor = x_to_payout(ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1)
+            floor = x_to_payout(bonus_payout_floor(name, scatter_count))
             cap = x_to_payout(50_000 if scatter_count == 6 else 25_000 if scatter_count == 5 else max_win)
             step = round(delta_units / (weight * 10)) * 10
             adjusted = payout + step
@@ -1551,7 +1675,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             visible_total = calibrate_bonus_frame_multipliers(event, expected_x)
             adjusted_payout = x_to_payout(visible_total)
             scatter_count = event["scatterCount"]
-            floor = ETHEREAL_MINIMUM_PAYOUT if scatter_count == 6 else 1_500 if scatter_count == 5 else 0.1
+            floor = bonus_payout_floor(name, scatter_count)
             cap = 50_000 if scatter_count == 6 else 25_000
             if visible_total + 1e-8 < floor or visible_total > cap + 1e-8:
                 raise ValueError(
@@ -1627,6 +1751,9 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             f"{name}: selectable multipliers cannot retain scatter odds and reach target RTP "
             f"(achieved {achieved:.6%}, target {TARGET_RTP:.6%})"
         )
+
+    if name == "unknown_extreme":
+        cap_unknown_extreme_ten_k_frequency(rows, events)
 
     # Fail generation unless every line payout adds to the SDK's authoritative
     # round payout, including all saved bonus spins and Wild Surge.

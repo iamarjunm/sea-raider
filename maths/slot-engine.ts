@@ -270,7 +270,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     id: 'unknown_extreme',
     name: 'Unknown Extreme',
     costMultiplier: 500.0,
-    description: '15% feature chance: 13% Hidden (5 Scatters), 2% Ethereal (6 Scatters at 8,000x–50,000x); 85% no feature.',
+    description: '15% feature chance: 13% Hidden (5 Scatters at 750x–25,000x), 2% Ethereal (6 Scatters at 8,000x–50,000x); 85% no feature.',
     rtp: 96.7,
     maxWin: '50,000x (Ethereal only)',
     category: 'enhancer',

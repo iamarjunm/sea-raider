@@ -104,7 +104,7 @@ const CUSTOM_CARDS: CustomCardDef[] = [
     mode: 'unknown_extreme',
     title: 'UNKNOWN EXTREME',
     multiplierBadge: '500×',
-    subtitle: '15% FEATURE · ETHEREAL 6-SCATTER RETURNS ≥8,000×',
+    subtitle: '15% FEATURE · 5-SCATTER ≥750× · ETHEREAL ≥8,000×',
     themeColor: 'border-cyan-400 shadow-[0_0_45px_rgba(34,211,238,0.6)]',
     accentGradient: 'from-[#04282c] via-[#02171a] to-[#01090a]',
     odds: [

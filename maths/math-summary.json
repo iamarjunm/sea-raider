@@ -52,10 +52,10 @@
     "unknown_extreme": {
       "cost": 500.0,
       "rtp": 0.967,
-      "hitRate": 0.342264,
-      "volatility": 3.3084,
-      "cvarRel": 40.4361,
-      "rtpFrom40xCost": 0.0141
+      "hitRate": 0.232289,
+      "volatility": 3.7693,
+      "cvarRel": 45.7736,
+      "rtpFrom40xCost": 0.0855
     }
   }
 }

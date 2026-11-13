@@ -76,8 +76,9 @@ for (const mode of index.modes) {
       const payoutX = Number(payout) / 100;
       if (scatterCount === 5) {
         fiveScatterWeight += Number(weight);
-        if (payoutX < 1_500 || payoutX > 25_000) {
-          throw new Error(`${mode.name}: 5-scatter payout ${payoutX}x is outside 1,500x–25,000x`);
+        const minFiveScatterPayout = mode.name === 'unknown_extreme' ? 750 : 1_500;
+        if (payoutX < minFiveScatterPayout || payoutX > 25_000) {
+          throw new Error(`${mode.name}: 5-scatter payout ${payoutX}x is outside ${minFiveScatterPayout}x–25,000x`);
         }
       }
       if (scatterCount === 4) fourScatterWeight += Number(weight);
