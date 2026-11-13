@@ -17,14 +17,14 @@ export declare const UNKNOWN_BONUS_MAX_WIN_MULTIPLIER = 50000;
 export declare const MAX_WIN_TRIGGER_ODDS: Record<PlayMode, number>;
 export declare const BONUS_OUTCOME_ODDS: {
     readonly bonus_chance: {
-        readonly three: 0.99;
-        readonly four: 0.008;
-        readonly five: 0.002;
+        readonly three: 0.96;
+        readonly four: 0.035;
+        readonly five: 0.005;
     };
     readonly super_bonus: {
-        readonly three: 0.45;
+        readonly three: 0.55;
         readonly four: 0.4;
-        readonly five: 0.15;
+        readonly five: 0.05;
     };
     readonly pirates_chance: {
         readonly three: 0.15;

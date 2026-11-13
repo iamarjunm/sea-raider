@@ -122,7 +122,7 @@ export const EXTREME_MAX_WIN_MULTIPLIER = 50000;
 export const UNKNOWN_BONUS_MAX_WIN_MULTIPLIER = EXTREME_MAX_WIN_MULTIPLIER;
 export const MAX_WIN_TRIGGER_ODDS = {
     // Keep frontend simulations aligned with the published book jackpot rows.
-    base: 1 / 500000,
+    base: 1 / 285714,
     bonus_chance: 1 / 200000,
     super_bonus: 1 / 160000,
     pirates_chance: 1 / 90000,
@@ -131,8 +131,8 @@ export const MAX_WIN_TRIGGER_ODDS = {
     unknown_extreme: 1 / 63749,
 };
 export const BONUS_OUTCOME_ODDS = {
-    bonus_chance: { three: 0.99, four: 0.008, five: 0.002 },
-    super_bonus: { three: 0.45, four: 0.4, five: 0.15 },
+    bonus_chance: { three: 0.96, four: 0.035, five: 0.005 },
+    super_bonus: { three: 0.55, four: 0.40, five: 0.05 },
     pirates_chance: { three: 0.15, four: 0.25, five: 0.6 },
     unknown_bonus: { three: 0.52, four: 0.369, five: 0.11, ethereal: 0.001 },
     unknown_extreme: { noBonus: 0.85, hidden: 0.13, ethereal: 0.02 },
@@ -140,8 +140,8 @@ export const BONUS_OUTCOME_ODDS = {
 // Trigger rates for the paid enhancer modes. Scatter shares above are
 // conditional on a trigger; these rates are the per-play feature frequencies.
 export const BONUS_TRIGGER_ODDS = {
-    bonus_chance: 0.05,
-    super_bonus: 0.0075,
+    bonus_chance: 0.10,
+    super_bonus: 0.055,
     pirates_chance: 0.0125,
     unknown_bonus: 1,
     unknown_extreme: 0.15,
@@ -170,8 +170,8 @@ export const MODE_CONFIGS = {
     bonus_chance: {
         id: 'bonus_chance',
         name: 'Bonus Chance',
-        costMultiplier: 3.0,
-        description: '5% feature trigger chance (about 1 in 20 plays). On a trigger: 3 Scatters 99%, 4 Scatters 0.8%, 5 Scatters 0.2%.',
+        costMultiplier: 5.0,
+        description: '10% feature trigger chance (about 1 in 10 plays). On a trigger: 3 Scatters 96%, 4 Scatters 3.5%, 5 Scatters 0.5%.',
         rtp: 96.7,
         maxWin: '25,000x',
         category: 'enhancer',
@@ -180,8 +180,8 @@ export const MODE_CONFIGS = {
     super_bonus: {
         id: 'super_bonus',
         name: 'Super Bonus Chance',
-        costMultiplier: 5.0,
-        description: '0.75% feature trigger chance. On a trigger: 3 Scatters 45%, 4 Scatters 40%, 5 Scatters 15%.',
+        costMultiplier: 7.0,
+        description: '5.5% feature trigger chance (about 1 in 18 plays). On a trigger: 3 Scatters 55%, 4 Scatters 40%, 5 Scatters 5%.',
         rtp: 96.7,
         maxWin: '25,000x',
         category: 'enhancer',
@@ -573,7 +573,7 @@ export function playSpin(mode, baseBet = 1.0) {
             isMaxWin: finalLineWin >= maxCap,
         };
     }
-    // 4. Base, Bonus Chance (3x), Super Bonus Chance (5x), Pirates Chance (25x)
+    // 4. Base, Bonus Chance (5x), Super Bonus Chance (7x), Pirates Chance (25x)
     const grid = generateRandomGrid();
     // BONUS_TRIGGER_ODDS are unconditional trigger chances. The percentages in
     // BONUS_OUTCOME_ODDS are conditional tier shares after a trigger occurs.
@@ -596,7 +596,7 @@ export function playSpin(mode, baseBet = 1.0) {
     else if (mode === 'super_bonus') {
         const triggerRoll = Math.random();
         if (triggerRoll < BONUS_TRIGGER_ODDS.super_bonus) {
-            // Super Bonus Chance triggers on 0.2% of plays.
+            // Super Bonus Chance triggers on 7.5% of plays.
             const scatRoll = Math.random();
             const targetScat = scatRoll < BONUS_OUTCOME_ODDS.super_bonus.three
                 ? 3
@@ -612,7 +612,7 @@ export function playSpin(mode, baseBet = 1.0) {
     else if (mode === 'bonus_chance') {
         const triggerRoll = Math.random();
         if (triggerRoll < BONUS_TRIGGER_ODDS.bonus_chance) {
-            // Bonus Chance triggers on 5% of plays.
+            // Bonus Chance triggers on 10% of plays.
             const scatRoll = Math.random();
             const targetScat = scatRoll < BONUS_OUTCOME_ODDS.bonus_chance.three
                 ? 3

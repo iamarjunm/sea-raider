@@ -8,13 +8,13 @@
     },
     {
       "name": "bonus_chance",
-      "cost": 3.0,
+      "cost": 5.0,
       "events": "bonus_chance.jsonl.zst",
       "weights": "bonus_chance.csv"
     },
     {
       "name": "super_bonus",
-      "cost": 5.0,
+      "cost": 7.0,
       "events": "super_bonus.jsonl.zst",
       "weights": "super_bonus.csv"
     },

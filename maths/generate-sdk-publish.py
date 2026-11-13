@@ -3,7 +3,7 @@ Sea Raider — Stake Engine math publisher.
 
 Builds fun, frequent-win distributions that:
   • target 96.7% RTP
-  • keep base hit-rate around 30%
+  • improve the base hit-rate while keeping the standard 25,000x cap
   • pass Stake risk checks (CVaR / tail liability)
   • emit index.json + CSV lookup + jsonl.zst books
 """
@@ -57,9 +57,9 @@ PAYLINES = [
 
 MODES = [
     # name, cost, max_win_x, hit_rate_target
-    ("base", 1.0, 25_000, 0.30),
-    ("bonus_chance", 3.0, 25_000, 0.72),
-    ("super_bonus", 5.0, 25_000, 0.42),
+    ("base", 1.0, 25_000, 0.55),
+    ("bonus_chance", 5.0, 25_000, 0.72),
+    ("super_bonus", 7.0, 25_000, 0.70),
     ("pirates_chance", 25.0, 25_000, 0.55),
     ("feature_spin", 10.0, 25_000, 0.70),
     # Every purchase awards a feature; the rare 50k row is the 6-scatter Ethereal.
@@ -236,7 +236,10 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
         # The wheel uses ten-point stops after 10x: 20x, 30x, 40x, …
         return min(cap, max(20, int(math.floor((value + 5) / 10) * 10)))
 
-    minimum_start = BONUS_START_MIN_BY_SCATTERS.get(event["scatterCount"], 1)
+    minimum_start = (
+        3 if event.get("mode") == "super_bonus" and event["scatterCount"] == 4
+        else BONUS_START_MIN_BY_SCATTERS.get(event["scatterCount"], 1)
+    )
 
     def ladder_options(value: int, radius: int) -> list[int]:
         if value <= 10:
@@ -606,7 +609,7 @@ def allocate_weights(probs: list[float]) -> list[int]:
     return weights
 
 
-def build_curve(cost: float, max_win: int, hit_rate: float) -> list[tuple[float, float]]:
+def build_curve(cost: float, max_win: int, hit_rate: float, mode_name: str) -> list[tuple[float, float]]:
     """
     Return [(payout_x, probability), ...] including the 0x bucket.
     Designed so:
@@ -620,7 +623,17 @@ def build_curve(cost: float, max_win: int, hit_rate: float) -> list[tuple[float,
 
     # Win shape in *absolute* base-bet multiples, as fractions of hit mass.
     # Tuned for a lively mid-volatility pirate slot.
-    if cost <= 2:
+    if mode_name == "base":
+        # Make the base game less punishing: frequent small/medium returns,
+        # while leaving the shared payline table and jackpot ladder unchanged.
+        shape = [
+            (0.5, 0.10),
+            (1.0, 0.30),
+            (1.5, 0.30),
+            (2.5, 0.20),
+            (4.58, 0.10),
+        ]
+    elif cost <= 2:
         # base / bonus_chance — lots of small line wins
         shape = [
             (0.25, 0.22),
@@ -853,7 +866,7 @@ def jackpot_ladder(name: str, max_win: int) -> list[tuple[float, float]]:
         "base": [
             (5_000, 1 / 50_000),
             (10_000, 1 / 150_000),
-            (25_000, 1 / 500_000),
+            (25_000, 1 / 200_000),
         ],
         "super_bonus": [
             (5_000, 1 / 18_000),
@@ -992,8 +1005,9 @@ def inject_jackpots(
 def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     # Each mode has its own deterministic stream so adding outcomes to one mode
     # cannot silently alter the subsequent modes' books.
-    RNG.seed(sum((index + 1) * ord(char) for index, char in enumerate(name)) + 42)
-    curve = build_curve(cost, max_win, hit_rate)
+    mode_seed = sum((index + 1) * ord(char) for index, char in enumerate(name)) + 42
+    RNG.seed(mode_seed)
+    curve = build_curve(cost, max_win, hit_rate, name)
     report = risk_report(curve, cost)
 
     # If risk fails, compress the far tail into mid wins
@@ -1071,10 +1085,10 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                                 ("none", 850_000_000_000)),
             "base": (("legend", 28_666_666), ("curse", 1_823_513_790),
                      ("none", 998_147_819_544)),
-            "bonus_chance": (("legend", 100_000_000), ("ghost", 400_000_000),
-                             ("curse", 49_500_000_000), ("none", 950_000_000_000)),
-            "super_bonus": (("legend", 1_125_000_000), ("ghost", 3_000_000_000),
-                            ("curse", 3_375_000_000), ("none", 992_500_000_000)),
+            "bonus_chance": (("legend", 500_000_000), ("ghost", 3_500_000_000),
+                             ("curse", 96_000_000_000), ("none", 900_000_000_000)),
+            "super_bonus": (("legend", 2_750_000_000), ("ghost", 22_000_000_000),
+                            ("curse", 30_250_000_000), ("none", 945_000_000_000)),
             "pirates_chance": (("legend", 7_500_000_000), ("ghost", 3_125_000_000),
                                ("curse", 1_875_000_000), ("none", 987_500_000_000)),
         }
@@ -1088,7 +1102,17 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                     key=lambda i: remaining[i][0],
                     reverse=True,
                 )
-            elif name in ("base", "bonus_chance") and tier in ("curse", "ghost"):
+            elif name == "bonus_chance" and tier in ("curse", "ghost"):
+                # Bonus Chance trades some feature payout size for its higher
+                # trigger rate, preserving room for frequent ordinary wins.
+                target_band = (6.0 if tier == "curse" else 32.0) * cost
+                order = sorted(range(len(remaining)), key=lambda i: abs(remaining[i][0] - target_band))
+            elif name == "super_bonus" and tier in ("curse", "ghost"):
+                # Keep Super Bonus's high trigger/scatter frequency inside its
+                # RTP budget by favoring lower booked payouts for common tiers.
+                target_band = (4.0 if tier == "curse" else 6.0) * cost
+                order = sorted(range(len(remaining)), key=lambda i: abs(remaining[i][0] - target_band))
+            elif name == "base" and tier in ("curse", "ghost"):
                 # Keep the common 3-scatter feature in a satisfying mid-win
                 # band instead of assigning every trigger to the extreme tail.
                 target_band = (50.0 if tier == "curse" else 250.0) * cost

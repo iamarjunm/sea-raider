@@ -69,8 +69,8 @@ test('Line wins divide the total play amount across 20 fixed paylines', () => {
 });
 
 test('Enhancer costs match specifications', () => {
-  assert.equal(MODE_CONFIGS.bonus_chance.costMultiplier, 3.0);
-  assert.equal(MODE_CONFIGS.super_bonus.costMultiplier, 5.0);
+  assert.equal(MODE_CONFIGS.bonus_chance.costMultiplier, 5.0);
+  assert.equal(MODE_CONFIGS.super_bonus.costMultiplier, 7.0);
   assert.equal(MODE_CONFIGS.pirates_chance.costMultiplier, 25.0);
   assert.equal(MODE_CONFIGS.feature_spin.costMultiplier, 10.0);
   assert.equal(MODE_CONFIGS.unknown_bonus.costMultiplier, 250.0);
@@ -105,8 +105,8 @@ test('Configured max wins and conditional bonus odds match the bonus cards', () 
   assert.equal(createMaxWinResult('bonus_chance').totalWin, 25_000);
   assert.equal(createMaxWinResult('unknown_extreme').totalWin, 50_000);
   assert.equal(UNKNOWN_BONUS_MAX_WIN_MULTIPLIER, 50_000);
-  assert.deepEqual(BONUS_OUTCOME_ODDS.bonus_chance, { three: 0.99, four: 0.008, five: 0.002 });
-  assert.deepEqual(BONUS_OUTCOME_ODDS.super_bonus, { three: 0.45, four: 0.4, five: 0.15 });
+  assert.deepEqual(BONUS_OUTCOME_ODDS.bonus_chance, { three: 0.96, four: 0.035, five: 0.005 });
+  assert.deepEqual(BONUS_OUTCOME_ODDS.super_bonus, { three: 0.55, four: 0.40, five: 0.05 });
   assert.deepEqual(BONUS_OUTCOME_ODDS.pirates_chance, { three: 0.15, four: 0.25, five: 0.6 });
   assert.deepEqual(BONUS_OUTCOME_ODDS.unknown_bonus, {
     three: 0.52,
@@ -119,8 +119,8 @@ test('Configured max wins and conditional bonus odds match the bonus cards', () 
     hidden: 0.13,
     ethereal: 0.02,
   });
-  assert.equal(BONUS_TRIGGER_ODDS.bonus_chance, 0.05);
-  assert.equal(BONUS_TRIGGER_ODDS.super_bonus, 0.0075);
+  assert.equal(BONUS_TRIGGER_ODDS.bonus_chance, 0.10);
+  assert.equal(BONUS_TRIGGER_ODDS.super_bonus, 0.055);
   assert.equal(BONUS_TRIGGER_ODDS.pirates_chance, 0.0125);
   assert.equal(BONUS_TRIGGER_ODDS.unknown_bonus, 1);
   assert.equal(BONUS_TRIGGER_ODDS.unknown_extreme, 0.15);
@@ -286,8 +286,8 @@ test('RGS API payout multipliers are interpreted as x values, not book hundredth
 test('Published scatter-feature trigger rates match the advertised math', () => {
   const expectedTriggerRates: Record<PlayMode, number> = {
     base: 0.001852180456,
-    bonus_chance: 0.05,
-    super_bonus: 0.0075,
+    bonus_chance: 0.10,
+    super_bonus: 0.055,
     pirates_chance: 0.0125,
     feature_spin: 0.000117424242,
     unknown_bonus: 1,
