@@ -39,7 +39,7 @@ def bonus_payout_floor(mode: str, scatter_count: int) -> float:
     if scatter_count == 5:
         if mode == "unknown_extreme":
             return UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM
-        return 1_500.0
+        return {"unknown_bonus": 500.0, "super_bonus": 10.0, "pirates_chance": 25.0}.get(mode, 1_500.0)
     return 0.1
 
 # payoutMultiplier uses hundredths of base bet: 100 == 1.00x
@@ -412,6 +412,280 @@ def cap_unknown_extreme_ten_k_frequency(
     raise ValueError("unknown_extreme: cannot meet the 10,000x frequency limit within the six-scatter payout rows")
 
 
+def prepare_low_payout_bonus_frames(event: dict) -> None:
+    """Create a sparse, paytable-valid feature sequence for a deliberately mid-tier book row."""
+    dead_board = [[symbol, symbol, symbol] for symbol in LOWS]
+    single_line_board = [
+        ["L1", "L2", "L3"],
+        ["L1", "L4", "L5"],
+        ["L1", "L2", "L4"],
+        ["L2", "L3", "L5"],
+        ["L3", "L4", "L5"],
+    ]
+    if not math.isclose(line_total(dead_board, 1.0, 1.0), 0, abs_tol=1e-9):
+        raise ValueError("mid-tier bonus template unexpectedly has a winning line")
+    if not math.isclose(line_total(single_line_board, 1.0, 1.0), 0.2, abs_tol=1e-9):
+        raise ValueError("mid-tier bonus template must contain exactly one minimum line win")
+    frames = event.get("bonusSpinFrames") or []
+    for index, frame in enumerate(frames):
+        frame["board"] = copy.deepcopy(single_line_board if index == 0 else dead_board)
+        frame["retriggerSpins"] = 0
+    surge = event.get("wildSurge")
+    if surge:
+        surge["wildCount"] = 0
+        surge["linesAwarded"] = 0
+        surge["frame"]["board"] = copy.deepcopy(dead_board)
+
+
+def apply_cost_recovery_target(
+    mode: str,
+    cost: float,
+    target_rate: float,
+    rows: list[tuple[int, int, int]],
+    events: list[dict],
+) -> None:
+    """Move losing probability into real cost-covering results and fund it from feature tails."""
+    previous_payouts = [payout for _, _, payout in rows]
+    cost_units = x_to_payout(cost)
+    target_weight = round(target_rate * TOTAL_WEIGHT)
+    current_weight = sum(weight for _, weight, payout in rows if payout >= cost_units)
+    remaining = target_weight - current_weight
+    if remaining <= 0:
+        return
+
+    target_specs: list[tuple[int, list[list[str]] | None, list[int], int]] = []
+    if mode == "unknown_bonus":
+        sources = [i for i, (_, weight, payout) in enumerate(rows)
+                   if weight and payout < cost_units
+                   and events[i]["events"][0].get("scatterCount") == 4]
+        half = remaining // 2
+        target_specs = [
+            (x_to_payout(300.0), None, sources, half),
+            (x_to_payout(700.0), None, sources, remaining - half),
+        ]
+    else:
+        sources = [i for i, (_, weight, payout) in enumerate(rows)
+                   if weight and 0 < payout < cost_units
+                   and not events[i]["events"][0].get("bonusTriggered")
+                   and events[i]["events"][0].get("scatterCount", 0) == 0]
+        multipliers = sorted({float(events[i]["events"][0]["wildMultiplier"]) for i in sources})
+        groups = []
+        for multiplier in multipliers:
+            group = [i for i in sources if float(events[i]["events"][0]["wildMultiplier"]) == multiplier]
+            catalog = line_variant_catalog(mode, cost, multiplier)
+            upper_bound = x_to_payout(cost * (8 if mode == "super_bonus" else 5))
+            valid = [p for p in catalog if cost_units <= p < upper_bound]
+            if valid:
+                groups.append((group, catalog, valid))
+        desired = [cost * 2.2, cost * 3.2] if mode == "super_bonus" else [cost * 1.6, cost * 3.2]
+        target_slices = [remaining // 2, remaining - remaining // 2]
+        remaining_caps = [sum(rows[i][1] for i in group) for group, _, _ in groups]
+        for goal, slice_weight in zip(desired, target_slices):
+            left = slice_weight
+            ordered_groups = sorted(range(len(groups)), key=lambda g: remaining_caps[g], reverse=True)
+            for group_index in ordered_groups:
+                group, catalog, valid = groups[group_index]
+                capacity = remaining_caps[group_index]
+                take = min(left, capacity)
+                if take <= 0:
+                    continue
+                payout = min(valid, key=lambda value: abs(payout_to_x(value) - goal))
+                target_specs.append((payout, catalog[payout][0], group, take))
+                left -= take
+                remaining_caps[group_index] -= take
+                if not left:
+                    break
+            if left:
+                raise ValueError(f"{mode}: insufficient paytable-valid line outcomes for its cost-recovery target")
+    if not target_specs:
+        raise ValueError(f"{mode}: no paytable-valid outcome can reach its cost-recovery target")
+
+    additions = []
+    needed_return = 0
+    for target_payout, target_board, sources, target_weight_slice in target_specs:
+        slice_remaining = target_weight_slice
+        source_order = sorted(sources, key=lambda i: rows[i][2])
+        for index in source_order:
+            sim_id, weight, payout = rows[index]
+            amount = min(weight, slice_remaining)
+            if amount <= 0:
+                continue
+            event = copy.deepcopy(events[index]["events"][0])
+            if mode == "unknown_bonus":
+                event["payoutX"] = target_payout / 100.0
+            else:
+                event["board"] = target_board
+                event["result"] = "line_win"
+                event["payoutX"] = target_payout / 100.0
+            rows[index] = (sim_id, weight - amount, payout)
+            additions.append((amount, target_payout, event))
+            needed_return += amount * (target_payout - payout)
+            slice_remaining -= amount
+            remaining -= amount
+            if not slice_remaining:
+                break
+        if slice_remaining:
+            raise ValueError(f"{mode}: insufficient losing outcome weight for its cost-recovery target")
+    if remaining:
+        raise ValueError(f"{mode}: insufficient losing outcome weight for its cost-recovery target")
+    for weight, payout, event in additions:
+        rows.append((len(rows), weight, payout))
+        events.append({"id": len(events), "events": [event], "payoutMultiplier": payout})
+
+    donors_by_mode = {"unknown_bonus": {5, 6}, "super_bonus": {5}, "pirates_chance": {5}}
+    eligible = donors_by_mode[mode]
+    donors = []
+    for i, (_, weight, payout) in enumerate(rows):
+        event = events[i]["events"][0]
+        if not weight or payout <= 0 or not event.get("bonusTriggered") or event.get("scatterCount") not in eligible:
+            continue
+        floor = x_to_payout(bonus_payout_floor(mode, event["scatterCount"]))
+        if payout > floor:
+            donors.append((weight * (payout - floor), i, floor))
+    donors.sort(reverse=True)
+    for _, index, floor in donors:
+        sim_id, weight, payout = rows[index]
+        max_reduction = ((payout - floor) // 10) * 10
+        reduction = min(max_reduction, int(math.ceil(needed_return / max(weight, 1) / 10) * 10))
+        if reduction <= 0:
+            continue
+        rows[index] = (sim_id, weight, payout - reduction)
+        events[index]["payoutMultiplier"] = payout - reduction
+        events[index]["events"][0]["payoutX"] = (payout - reduction) / 100.0
+        needed_return -= weight * reduction
+        if needed_return <= 0:
+            break
+    if needed_return > 0:
+        raise ValueError(f"{mode}: feature payout range cannot fund its cost-recovery target")
+
+    for index, (_, _, payout) in enumerate(rows):
+        event = events[index]["events"][0]
+        if (
+            not event.get("bonusTriggered") or payout <= 0
+            or (index < len(previous_payouts) and previous_payouts[index] == payout)
+        ):
+            continue
+        prepare_low_payout_bonus_frames(event)
+        visible = calibrate_bonus_frame_multipliers(event, payout / 100.0)
+        adjusted = x_to_payout(visible)
+        sim_id, weight, _ = rows[index]
+        rows[index] = (sim_id, weight, adjusted)
+        events[index]["payoutMultiplier"] = adjusted
+        event["payoutX"] = adjusted / 100.0
+
+
+def smooth_unknown_bonus_payout_bands(
+    rows: list[tuple[int, int, int]], events: list[dict]
+) -> None:
+    """Shift about 10% of RTP from 1,000–2,000x into cost-near bonus bands."""
+    low_payout = x_to_payout(900)
+    low_band_return = round(0.065 * TARGET_RTP * 250 * 100 * TOTAL_WEIGHT)
+    move_needed = math.ceil(low_band_return / low_payout)
+    tail_rows = sorted(
+        (i for i, (_, weight, payout) in enumerate(rows)
+         if weight > 0 and x_to_payout(1_000) <= payout < x_to_payout(2_000)
+         and events[i]["events"][0].get("scatterCount") == 5),
+        key=lambda i: rows[i][2],
+    )
+    additions = []
+    lost_return = 0
+    for index in tail_rows:
+        sim_id, weight, payout = rows[index]
+        amount = min(weight, move_needed)
+        if amount <= 0:
+            continue
+        variant = copy.deepcopy(events[index]["events"][0])
+        prepare_low_payout_bonus_frames(variant)
+        visible = calibrate_bonus_frame_multipliers(variant, 900.0)
+        variant_payout = x_to_payout(visible)
+        variant["payoutX"] = variant_payout / 100.0
+        rows[index] = (sim_id, weight - amount, payout)
+        additions.append((amount, variant_payout, variant))
+        lost_return += amount * (payout - variant_payout)
+        move_needed -= amount
+        if not move_needed:
+            break
+    if move_needed:
+        raise ValueError("unknown_bonus: not enough 1,000–2,000x five-scatter mass to smooth")
+    for weight, payout, event in additions:
+        rows.append((len(rows), weight, payout))
+        events.append({"id": len(events), "events": [event], "payoutMultiplier": payout})
+
+    # Reinvest the released RTP in four-scatter results just below the 250x buy
+    # cost; this fills 200–500x without changing the cost-or-more frequency.
+    remaining = lost_return
+    donors = sorted(
+        (i for i, (_, weight, payout) in enumerate(rows)
+         if weight > 0 and payout < x_to_payout(250)
+         and events[i]["events"][0].get("bonusTriggered")
+         and events[i]["events"][0].get("scatterCount") == 4),
+        key=lambda i: rows[i][2],
+    )
+    for index in donors:
+        sim_id, weight, payout = rows[index]
+        target = x_to_payout(240)
+        difference = target - payout
+        if difference <= 0:
+            continue
+        amount = min(weight, math.ceil(remaining / difference))
+        variant = copy.deepcopy(events[index]["events"][0])
+        prepare_low_payout_bonus_frames(variant)
+        visible = calibrate_bonus_frame_multipliers(variant, 240.0)
+        variant_payout = x_to_payout(visible)
+        if variant_payout >= x_to_payout(250):
+            continue
+        variant["payoutX"] = variant_payout / 100.0
+        rows[index] = (sim_id, weight - amount, payout)
+        rows.append((len(rows), amount, variant_payout))
+        events.append({"id": len(events), "events": [variant], "payoutMultiplier": variant_payout})
+        remaining -= amount * (variant_payout - payout)
+        if remaining <= 0:
+            break
+    if remaining > max(1, int(TARGET_RTP * 250 * 100 * TOTAL_WEIGHT * 1e-8)):
+        raise ValueError("unknown_bonus: could not reinvest band smoothing return below the buy cost")
+
+
+def rebalance_cost_mode_rtp(
+    cost: float,
+    rows: list[tuple[int, int, int]],
+    events: list[dict],
+    target_weighted_units: int,
+) -> None:
+    """Recenter RTP by swapping weight between cost-winning rows of the same scatter class."""
+    delta = target_weighted_units - sum(weight * payout for _, weight, payout in rows)
+    if not delta:
+        return
+    direction = 1 if delta > 0 else -1
+    threshold = x_to_payout(cost)
+    options = []
+    for source, (_, source_weight, source_payout) in enumerate(rows):
+        if source_weight <= 0 or source_payout < threshold:
+            continue
+        source_event = events[source]["events"][0]
+        source_scatter = int(source_event.get("scatterCount", 0))
+        for destination, (_, _, destination_payout) in enumerate(rows):
+            if source == destination or destination_payout < threshold:
+                continue
+            if int(events[destination]["events"][0].get("scatterCount", 0)) != source_scatter:
+                continue
+            difference = direction * (destination_payout - source_payout)
+            if difference > 0:
+                options.append((difference, source, destination))
+    for difference, source, destination in sorted(options, reverse=True):
+        amount = min(rows[source][1], abs(delta) // difference)
+        if amount <= 0:
+            continue
+        source_id, source_weight, source_payout = rows[source]
+        destination_id, destination_weight, destination_payout = rows[destination]
+        rows[source] = (source_id, source_weight - amount, source_payout)
+        rows[destination] = (destination_id, destination_weight + amount, destination_payout)
+        delta = target_weighted_units - sum(weight * payout for _, weight, payout in rows)
+        if abs(delta) <= max(1, int(target_weighted_units * 1e-8)):
+            break
+    if abs(delta) > max(1, int(target_weighted_units * 1e-8)):
+        raise ValueError(f"cost-win frequency RTP recentering left an excessive residual ({delta})")
+
+
 def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> float:
     """Fit a non-decreasing sequence using the published multiplier ladder."""
     frames = event.get("bonusSpinFrames") or []
@@ -781,7 +1055,7 @@ def board_for_outcome(mode: str, payout_x: float, max_win: int, bonus_tier: str 
     }
 
 
-def make_bonus_spin_frames(bonus_type: str, initial_spins: int) -> list[dict]:
+def make_bonus_spin_frames(bonus_type: str, initial_spins: int, mode: str = "base") -> list[dict]:
     """Precalculate the visible bonus sequence so live play and replay agree.
 
     Round payout remains the authoritative book payout. These snapshots carry
@@ -802,8 +1076,13 @@ def make_bonus_spin_frames(bonus_type: str, initial_spins: int) -> list[dict]:
                 board[3][FRAME_RNG.randrange(3)] = "WILD"
             current_multiplier = min(current_multiplier + 1, 20)
         elif bonus_type == "legend":
-            for col in (1, 2, 3):
-                board[col][FRAME_RNG.randrange(3)] = "WILD"
+            if mode in {"unknown_bonus", "super_bonus", "pirates_chance"}:
+                if FRAME_RNG.random() < 0.25:
+                    col = FRAME_RNG.randrange(5)
+                    board[col][FRAME_RNG.randrange(3)] = "WILD"
+            else:
+                for col in (1, 2, 3):
+                    board[col][FRAME_RNG.randrange(3)] = "WILD"
             current_multiplier = min(current_multiplier + 2, 50)
         elif bonus_type == "ethereal":
             for col in range(5):
@@ -836,7 +1115,9 @@ def make_bonus_spin_frames(bonus_type: str, initial_spins: int) -> list[dict]:
 
         # Guarantee a visible paying connection in each frame, as the live
         # bonus UI expects to animate line hits while the booked total counts up.
-        if line_total(board, 1.0, current_multiplier) <= 0:
+        if line_total(board, 1.0, current_multiplier) <= 0 and mode not in {
+            "unknown_bonus", "super_bonus", "pirates_chance"
+        }:
             for line in PAYLINES:
                 points = line[:3]
                 if any(board[col][row] == "SCATTER" for col, row in points):
@@ -856,7 +1137,7 @@ def make_bonus_spin_frames(bonus_type: str, initial_spins: int) -> list[dict]:
     return frames
 
 
-def make_wild_surge(bonus_type: str, frames: list[dict]) -> dict:
+def make_wild_surge(bonus_type: str, frames: list[dict], mode: str = "base") -> dict:
     """Precompute a bonus-end Wild board from Wilds revealed during free spins."""
     wild_count = sum(
         symbol == "WILD"
@@ -864,7 +1145,9 @@ def make_wild_surge(bonus_type: str, frames: list[dict]) -> dict:
         for reel in frame["board"]
         for symbol in reel
     )
-    wilds_per_line = WILD_SURGE_WILDS_PER_LINE[bonus_type]
+    wilds_per_line = 5 if bonus_type == "legend" and mode in {
+        "unknown_bonus", "super_bonus", "pirates_chance"
+    } else WILD_SURGE_WILDS_PER_LINE[bonus_type]
     lines_awarded = min(WILD_SURGE_MAX_LINES, wild_count // wilds_per_line)
     board = make_empty_board(FRAME_RNG)
     surge_rows = list(range(3))
@@ -1477,9 +1760,9 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
         meta = board_for_outcome(name, px, max_win, bonus_tier)
         if meta["bonusTriggered"] and meta["bonusType"] and meta["bonusSpinsAwarded"]:
             meta["bonusSpinFrames"] = make_bonus_spin_frames(
-                meta["bonusType"], meta["bonusSpinsAwarded"]
+                meta["bonusType"], meta["bonusSpinsAwarded"], name
             )
-            meta["wildSurge"] = make_wild_surge(meta["bonusType"], meta["bonusSpinFrames"])
+            meta["wildSurge"] = make_wild_surge(meta["bonusType"], meta["bonusSpinFrames"], name)
         if not meta["bonusTriggered"]:
             if payout > 0:
                 multiplier = meta["wildMultiplier"]
@@ -1751,6 +2034,14 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
             f"{name}: selectable multipliers cannot retain scatter odds and reach target RTP "
             f"(achieved {achieved:.6%}, target {TARGET_RTP:.6%})"
         )
+
+    cost_recovery_targets = {"unknown_bonus": 0.145, "super_bonus": 0.125, "pirates_chance": 0.095}
+    if name in cost_recovery_targets:
+        apply_cost_recovery_target(name, cost, cost_recovery_targets[name], rows, events)
+    if name == "unknown_bonus":
+        smooth_unknown_bonus_payout_bands(rows, events)
+    if name in cost_recovery_targets:
+        rebalance_cost_mode_rtp(cost, rows, events, target_weighted_units)
 
     if name == "unknown_extreme":
         cap_unknown_extreme_ten_k_frequency(rows, events)
