@@ -69,7 +69,7 @@ test('Line wins divide the total play amount across 20 fixed paylines', () => {
 });
 
 test('Enhancer costs match specifications', () => {
-  assert.equal(MODE_CONFIGS.bonus_chance.costMultiplier, 1.5);
+  assert.equal(MODE_CONFIGS.bonus_chance.costMultiplier, 3.0);
   assert.equal(MODE_CONFIGS.super_bonus.costMultiplier, 5.0);
   assert.equal(MODE_CONFIGS.pirates_chance.costMultiplier, 25.0);
   assert.equal(MODE_CONFIGS.feature_spin.costMultiplier, 10.0);
@@ -77,8 +77,8 @@ test('Enhancer costs match specifications', () => {
   assert.equal(MODE_CONFIGS.unknown_extreme.costMultiplier, 500.0);
 });
 
-test('Overall and every mode RTP stay at or below the 96.5% ceiling', () => {
-  assert.equal(MAX_RTP_PERCENT, 96.5);
+test('Overall and every mode RTP stay at or below the 96.7% ceiling', () => {
+  assert.equal(MAX_RTP_PERCENT, 96.7);
   for (const config of Object.values(MODE_CONFIGS)) {
     assert.ok(
       config.rtp <= MAX_RTP_PERCENT,
@@ -105,7 +105,7 @@ test('Configured max wins and conditional bonus odds match the bonus cards', () 
   assert.equal(createMaxWinResult('bonus_chance').totalWin, 25_000);
   assert.equal(createMaxWinResult('unknown_extreme').totalWin, 50_000);
   assert.equal(UNKNOWN_BONUS_MAX_WIN_MULTIPLIER, 50_000);
-  assert.deepEqual(BONUS_OUTCOME_ODDS.bonus_chance, { three: 0.6, four: 0.3, five: 0.1 });
+  assert.deepEqual(BONUS_OUTCOME_ODDS.bonus_chance, { three: 0.99, four: 0.008, five: 0.002 });
   assert.deepEqual(BONUS_OUTCOME_ODDS.super_bonus, { three: 0.45, four: 0.4, five: 0.15 });
   assert.deepEqual(BONUS_OUTCOME_ODDS.pirates_chance, { three: 0.15, four: 0.25, five: 0.6 });
   assert.deepEqual(BONUS_OUTCOME_ODDS.unknown_bonus, {
@@ -119,7 +119,7 @@ test('Configured max wins and conditional bonus odds match the bonus cards', () 
     hidden: 0.13,
     ethereal: 0.02,
   });
-  assert.equal(BONUS_TRIGGER_ODDS.bonus_chance, 0.005);
+  assert.equal(BONUS_TRIGGER_ODDS.bonus_chance, 0.05);
   assert.equal(BONUS_TRIGGER_ODDS.super_bonus, 0.0075);
   assert.equal(BONUS_TRIGGER_ODDS.pirates_chance, 0.0125);
   assert.equal(BONUS_TRIGGER_ODDS.unknown_bonus, 1);
@@ -286,7 +286,7 @@ test('RGS API payout multipliers are interpreted as x values, not book hundredth
 test('Published scatter-feature trigger rates match the advertised math', () => {
   const expectedTriggerRates: Record<PlayMode, number> = {
     base: 0.001852180456,
-    bonus_chance: 0.005,
+    bonus_chance: 0.05,
     super_bonus: 0.0075,
     pirates_chance: 0.0125,
     feature_spin: 0.000117424242,

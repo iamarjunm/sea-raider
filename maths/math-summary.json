@@ -1,61 +1,61 @@
 {
-  "targetRtp": 0.964,
+  "targetRtp": 0.967,
   "modes": {
     "base": {
       "cost": 1.0,
-      "rtp": 0.964,
+      "rtp": 0.967,
       "hitRate": 0.300029,
-      "volatility": 53.9903,
-      "cvarRel": 554.7132,
-      "rtpFrom40xCost": 0.8313
+      "volatility": 54.4059,
+      "cvarRel": 557.7132,
+      "rtpFrom40xCost": 0.8318
     },
     "bonus_chance": {
-      "cost": 1.5,
-      "rtp": 0.964,
-      "hitRate": 0.340019,
-      "volatility": 33.2143,
-      "cvarRel": 674.345,
-      "rtpFrom40xCost": 0.8029
+      "cost": 3.0,
+      "rtp": 0.967,
+      "hitRate": 0.720023,
+      "volatility": 21.3063,
+      "cvarRel": 234.9667,
+      "rtpFrom40xCost": 0.5309
     },
     "super_bonus": {
       "cost": 5.0,
-      "rtp": 0.964,
+      "rtp": 0.967,
       "hitRate": 0.42008,
-      "volatility": 17.9333,
-      "cvarRel": 377.2312,
-      "rtpFrom40xCost": 0.7303
+      "volatility": 18.7964,
+      "cvarRel": 416.7429,
+      "rtpFrom40xCost": 0.7194
     },
     "pirates_chance": {
       "cost": 25.0,
-      "rtp": 0.964,
+      "rtp": 0.967,
       "hitRate": 0.55014,
-      "volatility": 8.2049,
-      "cvarRel": 148.6036,
-      "rtpFrom40xCost": 0.6496
+      "volatility": 7.8283,
+      "cvarRel": 118.1993,
+      "rtpFrom40xCost": 0.6296
     },
     "feature_spin": {
       "cost": 10.0,
-      "rtp": 0.964,
-      "hitRate": 0.684222,
-      "volatility": 10.2392,
+      "rtp": 0.967,
+      "hitRate": 0.686569,
+      "volatility": 10.2322,
       "cvarRel": 96.4545,
-      "rtpFrom40xCost": 0.0927
+      "rtpFrom40xCost": 0.0924
     },
     "unknown_bonus": {
       "cost": 250.0,
-      "rtp": 0.964,
+      "rtp": 0.967,
       "hitRate": 1.0,
-      "volatility": 2.9906,
-      "cvarRel": 62.4267,
-      "rtpFrom40xCost": 0.0648
+      "volatility": 4.0557,
+      "cvarRel": 91.3026,
+      "rtpFrom40xCost": 0.0853
     },
     "unknown_extreme": {
       "cost": 500.0,
-      "rtp": 0.964,
-      "hitRate": 0.359066,
-      "volatility": 3.2592,
-      "cvarRel": 42.1708,
-      "rtpFrom40xCost": 0.0114
+      "rtp": 0.967,
+      "hitRate": 0.360156,
+      "volatility": 3.2913,
+      "cvarRel": 43.0239,
+      "rtpFrom40xCost": 0.0145
     }
   }
 }

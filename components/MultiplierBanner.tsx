@@ -26,7 +26,7 @@ export default function MultiplierBanner({
   }).format(multiplier);
 
   return (
-    <div className="relative w-36 sm:w-48 md:w-56 aspect-[1774/887] select-none flex items-center justify-center drop-shadow-[0_8px_25px_rgba(0,0,0,0.85)]">
+    <div className="game-multiplier-banner relative aspect-[1774/887] select-none flex items-center justify-center drop-shadow-[0_8px_25px_rgba(0,0,0,0.85)]">
       {/* Background Pirate Skull & Scimitars Component Frame */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image

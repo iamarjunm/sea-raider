@@ -149,7 +149,7 @@ export type PlayMode =
   | 'unknown_bonus'
   | 'unknown_extreme';
 
-export const MAX_RTP_PERCENT = 96.5;
+export const MAX_RTP_PERCENT = 96.7;
 export const STANDARD_MAX_WIN_MULTIPLIER = 25_000;
 export const EXTREME_MAX_WIN_MULTIPLIER = 50_000;
 // 50,000x is reserved exclusively for the six-scatter Ethereal outcome.
@@ -157,16 +157,16 @@ export const UNKNOWN_BONUS_MAX_WIN_MULTIPLIER = EXTREME_MAX_WIN_MULTIPLIER;
 export const MAX_WIN_TRIGGER_ODDS: Record<PlayMode, number> = {
   // Keep frontend simulations aligned with the published book jackpot rows.
   base: 1 / 500_000,
-  bonus_chance: 1 / 750_000,
+  bonus_chance: 1 / 200_000,
   super_bonus: 1 / 160_000,
   pirates_chance: 1 / 90_000,
   feature_spin: 1 / 110_000,
-  unknown_bonus: 1 / 12_000,
-  unknown_extreme: 1 / 7_500,
+  unknown_bonus: 1 / 5_000,
+  unknown_extreme: 1 / 63_749,
 };
 
 export const BONUS_OUTCOME_ODDS = {
-  bonus_chance: { three: 0.6, four: 0.3, five: 0.1 },
+  bonus_chance: { three: 0.99, four: 0.008, five: 0.002 },
   super_bonus: { three: 0.45, four: 0.4, five: 0.15 },
   pirates_chance: { three: 0.15, four: 0.25, five: 0.6 },
   unknown_bonus: { three: 0.52, four: 0.369, five: 0.11, ethereal: 0.001 },
@@ -176,7 +176,7 @@ export const BONUS_OUTCOME_ODDS = {
 // Trigger rates for the paid enhancer modes. Scatter shares above are
 // conditional on a trigger; these rates are the per-play feature frequencies.
 export const BONUS_TRIGGER_ODDS: Partial<Record<PlayMode, number>> = {
-  bonus_chance: 0.005,
+  bonus_chance: 0.05,
   super_bonus: 0.0075,
   pirates_chance: 0.0125,
   unknown_bonus: 1,
@@ -212,16 +212,16 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: 'Standard Game',
     costMultiplier: 1.0,
     description: 'Classic High-Volatility 5x3 pirate slot with 20 fixed paylines and Wild Surges.',
-    rtp: 96.4015,
+    rtp: 96.7,
     maxWin: '25,000x',
     category: 'feature',
   },
   bonus_chance: {
     id: 'bonus_chance',
     name: 'Bonus Chance',
-    costMultiplier: 1.5,
-    description: '0.5% feature trigger chance. On a trigger: 3 Scatters 60%, 4 Scatters 30%, 5 Scatters 10%.',
-    rtp: 96.4,
+    costMultiplier: 3.0,
+    description: '5% feature trigger chance (about 1 in 20 plays). On a trigger: 3 Scatters 99%, 4 Scatters 0.8%, 5 Scatters 0.2%.',
+    rtp: 96.7,
     maxWin: '25,000x',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/bonus_chance_1_68723c50.webp',
@@ -231,7 +231,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: 'Super Bonus Chance',
     costMultiplier: 5.0,
     description: '0.75% feature trigger chance. On a trigger: 3 Scatters 45%, 4 Scatters 40%, 5 Scatters 15%.',
-    rtp: 96.4001,
+    rtp: 96.7,
     maxWin: '25,000x',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/super_bonus_chance_5533c1d2.webp',
@@ -241,7 +241,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: "Pirates' Chance",
     costMultiplier: 25.0,
     description: '1.25% feature trigger chance. On a trigger: 3 Scatters 15%, 4 Scatters 25%, 5 Scatters 60%.',
-    rtp: 96.4,
+    rtp: 96.7,
     maxWin: '25,000x',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/pirates_chance_1b0482b5.webp',
@@ -251,7 +251,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: 'Feature Spin',
     costMultiplier: 10.0,
     description: 'Every spin shows at least one Wild. Any line win uses the published 20-line paytable.',
-    rtp: 96.4,
+    rtp: 96.7,
     maxWin: '25,000x',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/feature_spin_b99e4066.webp',
@@ -261,7 +261,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: 'Unknown Bonus',
     costMultiplier: 250.0,
     description: 'Guaranteed feature. Outcome: 3 Scatters 52%, 4 Scatters 36.9%, 5 Scatters 11%, Ethereal 6 Scatters 0.1%.',
-    rtp: 96.4,
+    rtp: 96.7,
     maxWin: '50,000x (Ethereal only)',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/unknown_bonus_b8ab82bc.webp',
@@ -271,7 +271,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     name: 'Unknown Extreme',
     costMultiplier: 500.0,
     description: '15% feature chance: 13% Hidden (5 Scatters), 2% Ethereal (6 Scatters up to 50,000x); 85% no feature.',
-    rtp: 96.4,
+    rtp: 96.7,
     maxWin: '50,000x (Ethereal only)',
     category: 'enhancer',
     badgeAsset: '/assets/aistudio/unknown_extreme_bonus_3340dd16.webp',
@@ -693,7 +693,7 @@ export function playSpin(mode: PlayMode, baseBet: number = 1.0): SpinResult {
     };
   }
 
-  // 4. Base, Bonus Chance (1.5x), Super Bonus Chance (5x), Pirates Chance (25x)
+  // 4. Base, Bonus Chance (3x), Super Bonus Chance (5x), Pirates Chance (25x)
   const grid = generateRandomGrid();
 
   // BONUS_TRIGGER_ODDS are unconditional trigger chances. The percentages in
@@ -733,7 +733,7 @@ export function playSpin(mode: PlayMode, baseBet: number = 1.0): SpinResult {
   } else if (mode === 'bonus_chance') {
     const triggerRoll = Math.random();
     if (triggerRoll < BONUS_TRIGGER_ODDS.bonus_chance!) {
-      // Bonus Chance triggers on 0.5% of plays.
+      // Bonus Chance triggers on 5% of plays.
       const scatRoll = Math.random();
       const targetScat =
         scatRoll < BONUS_OUTCOME_ODDS.bonus_chance.three

@@ -85,7 +85,7 @@ export default function ReelGrid({
     return lineDef;
   }, [winningHits, activeHitIndex]);
 
-  const isAnticipationActive = landedScatterCount >= 2 && teaseReels.some((t) => t);
+  const isAnticipationActive = landedScatterCount >= 1 && teaseReels.some((t) => t);
   const anyReelSpinning = spinningReels.some((s) => s);
   const isWinOnBoard = winningHits.length > 0 && !anyReelSpinning;
   const lanternState = lanternBlaze || isWinOnBoard ? 'is-blazing' : isAnticipationActive ? 'is-tense' : '';

@@ -12,9 +12,8 @@ attribute vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
 `;
 
-// One pass: cover-fit the painting, sway it like a deck at sea, roll the open water
-// with perspective-scaled waves, glint the moon and sunset paths, and flicker the
-// two deck lanterns painted into the backdrop.
+// One pass: cover-fit the painting, roll the open water with perspective-scaled waves,
+// glint the moon and sunset paths, and flicker the two deck lanterns.
 const FRAGMENT = `
 precision highp float;
 uniform sampler2D uTex;
@@ -57,22 +56,6 @@ void main() {
   vec2 uv = s;
   if (A > uImgAspect) uv.y = 0.5 + (s.y - 0.5) * (uImgAspect / A);
   else uv.x = 0.5 + (s.x - 0.5) * (A / uImgAspect);
-
-  // Ship's helm in the right corner: the painting is seen in perspective, so rock it
-  // inside its own (elliptical) wheel plane. The twist fades out past the handle tips
-  // and is clipped above the lantern and below the rope/crate that sit in front of it.
-  vec2 P = uv * vec2(1672.0, 941.0);
-  vec2 helmC = vec2(1690.0, 568.0);
-  vec2 helmR = vec2(187.0, 145.0);
-  vec2 hq = (P - helmC) / helmR;
-  float hr = length(hq);
-  float hw = (1.0 - smoothstep(1.18, 1.46, hr)) * smoothstep(412.0, 428.0, P.y) * (1.0 - smoothstep(684.0, 700.0, P.y));
-  if (hw > 0.0) {
-    float helmAngle = (0.17 * sin(uTime * 0.62) + 0.06 * sin(uTime * 1.43 + 0.8)) * hw;
-    float cs = cos(helmAngle); float sn = sin(helmAngle);
-    vec2 rq = vec2(cs * hq.x - sn * hq.y, sn * hq.x + cs * hq.y);
-    uv = (helmC + rq * helmR) / vec2(1672.0, 941.0);
-  }
 
   float m = texture2D(uMask, uv).r;
   vec3 col;

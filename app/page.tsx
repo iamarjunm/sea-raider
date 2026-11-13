@@ -569,7 +569,7 @@ export default function SlotGamePage() {
             baseBet: currentBet,
             mode: modeToUse,
           });
-          outcome = rgsRoundToSpinResult(play.round, modeToUse, currentBet);
+          outcome = rgsRoundToSpinResult(play.round, modeToUse, currentBet, true);
           // Keep the feature return out of the visible wallet until the bonus
           // has completed and /end-round settles the booked total.
           if (outcome.bonusTriggered) setBalance((prev) => Math.max(0, prev - spinCost));
@@ -663,8 +663,10 @@ export default function SlotGamePage() {
           }
         }
 
-        // BUILDBUP ACTIVATION: Once 2 Scatter symbols land, tease remaining reels!
-        if (currentScatters >= 2 && reelIdx < 4) {
+        // Normal spins tease after two scatters; the high-frequency and
+        // Unknown Extreme modes also build anticipation from a single scatter.
+        const nearMissMode = modeToUse === 'bonus_chance' || modeToUse === 'unknown_extreme';
+        if ((currentScatters >= 2 || (nearMissMode && currentScatters >= 1)) && reelIdx < 4) {
           teaseActive = true;
           setTeaseReels((prev) => {
             const next = [...prev];
@@ -721,7 +723,6 @@ export default function SlotGamePage() {
         if (!outcome.bonusTriggered && !isBigWinOutcome && outcome.totalWin >= spinCost * 3) {
           showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
         }
-
         if (outcome.bonusTriggered) {
           let bonusLineWins = (outcome.bonusSpinFrames || []).reduce((sum, frame) => {
             const evaluated = evaluateBonusSpinFrame(frame, currentBet);
@@ -1145,7 +1146,6 @@ export default function SlotGamePage() {
     const isBig = spinWin >= currentBet * 30;
     soundManager.playWin(isBig);
     if (!isBig && spinWin >= currentBet * 5) showCaptainCameo(spinWin, spinWin / currentBet);
-
     if (isBig) {
       await new Promise((res) => setTimeout(res, pace(2000)));
       if (skipBonusNowRef.current) return;
@@ -1687,7 +1687,7 @@ export default function SlotGamePage() {
             {/* Central 5x3 Reel Grid Frame */}
             <div className="game-reel-shell relative flex-1 max-w-[1600px] flex items-center justify-center min-h-0">
               {/* Round line multiplier banner pinned above the reel frame */}
-              <div className="absolute -top-7 sm:-top-11 md:-top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+              <div className="game-multiplier-anchor absolute left-1/2 z-30 pointer-events-none">
                 <MultiplierBanner
                   multiplier={isBonusActive ? bonusMultiplier : wildMultiplier}
                   label={isBonusActive ? 'BONUS MULTIPLIER' : 'GAME MULTIPLIER'}
@@ -1718,12 +1718,12 @@ export default function SlotGamePage() {
               />
             </div>
 
-            {/* One vertical meter rail is used at every viewport size. */}
+            {/* Give wide screens a side rail and small screens a horizontal meter below the reels. */}
             <div className="game-wild-surge-rail hidden md:flex shrink-0 items-center justify-center">
               {isBonusActive && <WildSurgeMeter bonusType={bonusType} wildCount={bonusWildCount} orientation="vertical" />}
             </div>
             <div className="game-wild-surge-rail-compact">
-              {isBonusActive && <WildSurgeMeter bonusType={bonusType} wildCount={bonusWildCount} orientation="vertical" />}
+              {isBonusActive && <WildSurgeMeter bonusType={bonusType} wildCount={bonusWildCount} orientation="horizontal" />}
             </div>
           </section>
 

@@ -12,6 +12,7 @@ import {
   BonusSpinFrame,
   WildSurgeResult,
   evaluateGrid,
+  generateRandomGrid,
 } from './slot-engine';
 
 interface BookEvent {
@@ -108,6 +109,54 @@ export function bookEntryToSpinResult(
   };
 }
 
+/** Randomize visible stops without changing the booked line payout or feature. */
+function randomizePresentationBoard(result: SpinResult, mode: PlayMode, baseBet: number): SpinResult {
+  if (result.bonusTriggered) return result;
+
+  const wager = baseBet * getPublishedModeCost(mode);
+  const wantsScatterNearMiss = mode === 'bonus_chance' || mode === 'unknown_extreme';
+  const targetWin = result.totalLineWin;
+
+  // The weighted book has a small set of canonical boards. Randomize the
+  // visible reel stops while keeping ordinary line wins exactly paytable-valid.
+  // For zero-win Chance / Unknown Extreme outcomes, add one or two scatters as
+  // a near-miss tease; fewer than three can never award the feature.
+  for (let attempt = 0; attempt < 1400; attempt += 1) {
+    const board: SymbolId[][] = generateRandomGrid().map((reel) => reel.map((symbol) => symbol === 'SCATTER' ? 'L1' : symbol));
+    const targetScatters = wantsScatterNearMiss && targetWin === 0 ? (Math.random() < 0.68 ? 2 : 1) : 0;
+    if (targetScatters > 0) {
+      // Keep tease scatters on early reels so at least one reel is still
+      // spinning when the anticipation animation starts.
+      const cells = Array.from({ length: 9 }, (_, index) => index + 3);
+      for (let index = cells.length - 1; index > 0; index -= 1) {
+        const swap = Math.floor(Math.random() * (index + 1));
+        [cells[index], cells[swap]] = [cells[swap], cells[index]];
+      }
+      const usedReels = new Set<number>();
+      for (const cell of cells) {
+        const reel = Math.floor(cell / 3);
+        if (usedReels.has(reel)) continue;
+        usedReels.add(reel);
+        board[reel][cell % 3] = 'SCATTER';
+        if (usedReels.size === targetScatters) break;
+      }
+    }
+
+    const evaluated = evaluateGrid(board, wager, result.wildMultiplier);
+    if (evaluated.scatterCount >= 3 || Math.abs(evaluated.totalLineWin - targetWin) > Math.max(0.000001, baseBet * 0.000001)) continue;
+    return {
+      ...result,
+      grid: board,
+      lineHits: evaluated.lineHits,
+      totalLineWin: evaluated.totalLineWin,
+      scatterCount: evaluated.scatterCount,
+      scatterPositions: evaluated.scatterPositions,
+    };
+  }
+
+  return result;
+}
+
 /** Sample a spin from published math books (local / demo). */
 export function sampleBookSpin(mode: PlayMode, baseBet: number = 1): SpinResult {
   const table = TABLES.modes[mode];
@@ -115,7 +164,7 @@ export function sampleBookSpin(mode: PlayMode, baseBet: number = 1): SpinResult 
     throw new Error(`No published book table for mode "${mode}"`);
   }
   const entry = pickWeighted(table.entries);
-  return bookEntryToSpinResult(entry, mode, baseBet);
+  return randomizePresentationBoard(bookEntryToSpinResult(entry, mode, baseBet), mode, baseBet);
 }
 
 /** Lightweight sampler for the no-wager autoplay simulator. */
@@ -135,7 +184,8 @@ export function rgsRoundToSpinResult(
     mode?: string;
   },
   mode: PlayMode,
-  baseBet: number
+  baseBet: number,
+  randomizePresentation = false,
 ): SpinResult {
   const rawState = round.state || round.events || [];
   const stateObject = rawState && typeof rawState === 'object' ? rawState as {
@@ -184,7 +234,8 @@ export function rgsRoundToSpinResult(
       payoutX: payoutMultiplierX,
     },
   };
-  return bookEntryToSpinResult(entry, mode, baseBet);
+  const result = bookEntryToSpinResult(entry, mode, baseBet);
+  return randomizePresentation ? randomizePresentationBoard(result, mode, baseBet) : result;
 }
 
 export function getPublishedModeCost(mode: PlayMode): number {

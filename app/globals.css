@@ -1002,17 +1002,17 @@
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__count small { font-size: 6px; }
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__track { gap: 3px; }
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__foot { font-size: 5px; letter-spacing: 0; }
-  #game-surface .game-stage--wild-surge .game-reel-shell {
+  #game-surface .game-stage .game-reel-shell {
     width: min(calc(100vw - 78px), calc((100dvh - 240px) * 1.667));
     max-width: none;
     flex: none;
-    margin-left: -38px;
+    margin-left: auto;
   }
 }
 @media (min-width: 640px) and (max-width: 767px) {
-  #game-surface .game-stage--wild-surge .game-reel-shell {
+  #game-surface .game-stage .game-reel-shell {
     width: min(calc(100vw - 220px), calc((100dvh - 240px) * 1.667));
-    margin-left: 0;
+    margin-left: auto;
   }
 }
 @media (max-width: 500px) and (max-height: 500px) {
@@ -1028,8 +1028,188 @@
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__count small { font-size: 5px; }
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__track { gap: 2px; }
   #game-surface .game-wild-surge-rail-compact .wild-surge-meter__foot { font-size: 4px; }
-  #game-surface .game-stage--wild-surge .game-reel-shell {
+  #game-surface .game-stage .game-reel-shell {
     width: min(calc(100vw - 78px), calc((100dvh - 96px) * 1.667));
-    margin-left: -38px;
+    margin-left: auto;
+  }
+}
+
+/* Compact screens move Wild Surge under the reels, keeping the reel cabinet at
+   its normal full-width size instead of reserving a side rail. */
+@media (max-width: 767px), (min-width: 768px) and (max-width: 1024px) and (max-height: 650px), (max-height: 500px) {
+  #game-surface .game-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(2px, .6vh, 5px);
+  }
+  #game-surface .game-stage .game-wild-surge-rail {
+    display: none !important;
+  }
+  #game-surface .game-stage .game-reel-shell {
+    flex: none;
+    max-width: none;
+    align-self: center;
+    left: auto;
+    right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: none;
+  }
+  #game-surface .game-wild-surge-rail-compact {
+    position: static;
+    inset: auto;
+    z-index: 30;
+    display: flex;
+    flex: 0 0 34px;
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    align-items: center;
+    justify-content: center;
+    transform: none;
+    pointer-events: none;
+  }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter:not(.wild-surge-meter--vertical) {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(76px, 1.35fr) minmax(0, .9fr);
+    align-items: center;
+    gap: 7px;
+    width: min(92vw, 390px);
+    height: 30px;
+    min-height: 30px;
+    margin: 0;
+    padding: 4px 8px;
+  }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__title { font-size: 7px; letter-spacing: .08em; white-space: nowrap; }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__count { font-size: 8px; white-space: nowrap; }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__count small { display: inline; margin: 0 0 0 2px; font-size: 6px; }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__track {
+    display: flex;
+    flex: none;
+    flex-direction: row;
+    gap: 3px;
+    width: 100%;
+    height: 13px;
+    min-height: 0;
+    margin: 0;
+    padding: 3px;
+  }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__segment { flex: 1; width: auto; height: 100%; min-width: 0; min-height: 0; }
+  #game-surface .game-wild-surge-rail-compact .wild-surge-meter__foot {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    font-size: 5px;
+    line-height: 1.05;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 767px) and (min-height: 501px) {
+  #game-surface .game-stage .game-reel-shell {
+    width: min(100%, calc((100dvh - 190px) * 1.667));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (min-height: 501px) and (max-height: 650px) {
+  #game-surface .game-stage { inset: 44px 0 45px; max-height: none; }
+  #game-surface .game-stage .game-reel-shell {
+    width: min(75vw, calc((100dvh - 124px) * 1.667));
+  }
+  #game-surface .game-stage > div:first-child {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    z-index: 40;
+    transform: translateY(-50%) scale(.55);
+    transform-origin: left center;
+  }
+  #game-surface .game-header { transform: scale(.54); transform-origin: top center; margin-bottom: -16px; }
+  #game-surface .game-footer { transform: scale(.5); transform-origin: bottom center; }
+  #game-surface .game-footer .spin-button-canvas { transform: scale(1.15); }
+}
+
+@media (min-width: 501px) and (max-height: 500px) {
+  #game-surface .game-stage { inset: 36px 0 44px; max-height: none; }
+  #game-surface .game-stage > div:first-child {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    z-index: 40;
+    transform: translateY(-50%) scale(.55);
+    transform-origin: left center;
+  }
+  #game-surface .game-stage .game-reel-shell {
+    width: min(75vw, calc((100dvh - 124px) * 1.667));
+  }
+  #game-surface .game-footer { transform: scale(.55); transform-origin: bottom center; }
+}
+
+@media (max-width: 500px) and (max-height: 500px) {
+  #game-surface .game-stage { inset: 20px 0 44px; max-height: none; }
+  #game-surface .game-stage .game-reel-shell {
+    width: min(65vw, calc((100dvh - 96px) * 1.667));
+  }
+  #game-surface .game-header { transform: scale(.62); transform-origin: top center; margin-bottom: -12px; }
+  #game-surface .game-footer { transform: scale(.55); transform-origin: bottom center; }
+}
+
+/* Scale the multiplier plaque with the reel cabinet, including portrait phones. */
+#game-surface .game-reel-shell {
+  container-type: inline-size;
+}
+#game-surface .game-multiplier-anchor {
+  top: clamp(2px, 2cqw, 10px);
+  transform: translate(-50%, calc(-100% + 20px));
+}
+#game-surface .game-multiplier-banner {
+  width: clamp(100px, 36cqw, 220px);
+}
+#game-surface .game-multiplier-banner > div:nth-child(2) > span {
+  font-size: clamp(5px, 4.8cqw, 9px);
+}
+#game-surface .game-multiplier-banner > div:nth-child(2) > div > span {
+  font-size: clamp(13px, 12cqw, 22px);
+}
+#game-surface .game-multiplier-banner > div:nth-child(2) > div {
+  height: clamp(20px, 19cqw, 36px);
+}
+
+@media (max-width: 767px) and (min-height: 501px) {
+  #game-surface .game-stage .game-reel-shell {
+    width: min(92vw, calc((100dvh - 210px) * 1.56));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (min-height: 501px) and (max-height: 650px) {
+  #game-surface .game-stage .game-reel-shell {
+    width: min(68vw, calc((100dvh - 145px) * 1.56));
+  }
+}
+
+@media (min-width: 1200px) and (min-height: 700px) {
+  #game-surface .game-multiplier-banner {
+    width: clamp(160px, 20cqw, 240px);
+  }
+}
+
+/* Align the plaque with the frame artwork, which is slightly inset in its cabinet. */
+#game-surface .game-reel-shell > .game-multiplier-anchor {
+  top: clamp(2px, 2cqw, 10px);
+}
+
+@media (max-width: 767px) {
+  #game-surface .game-reel-shell > .game-multiplier-anchor {
+    transform: translate(-50%, calc(-100% + 52px));
   }
 }

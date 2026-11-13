@@ -8,7 +8,7 @@
     },
     {
       "name": "bonus_chance",
-      "cost": 1.5,
+      "cost": 3.0,
       "events": "bonus_chance.jsonl.zst",
       "weights": "bonus_chance.csv"
     },

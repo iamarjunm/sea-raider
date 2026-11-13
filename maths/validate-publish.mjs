@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = new URL('./publish_files/', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
+const projectRoot = new URL('../', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
 const index = JSON.parse(fs.readFileSync(path.join(root, 'index.json'), 'utf8'));
 
 if (!Array.isArray(index.modes) || index.modes.length < 1 || index.modes.length > 20) {
@@ -28,7 +29,10 @@ for (const mode of index.modes) {
   const eventsFile = mode.events.endsWith('.zst')
     ? mode.events.slice(0, -4)
     : mode.events;
-  const uncompressedEventsPath = path.join(root, eventsFile);
+  const packagedEventsPath = path.join(root, eventsFile);
+  const uncompressedEventsPath = fs.existsSync(packagedEventsPath)
+    ? packagedEventsPath
+    : path.join(projectRoot, eventsFile);
   const events = fs.existsSync(uncompressedEventsPath)
     ? fs
         .readFileSync(uncompressedEventsPath, 'utf8')
@@ -98,8 +102,8 @@ for (const mode of index.modes) {
     throw new Error(`${mode.name}: a payout exceeds its configured max-win cap`);
   }
   const rtp = weightedPayout / totalWeight / 100 / mode.cost;
-  if (rtp > 0.965 + 0.00001 || rtp < 0.95) {
-    throw new Error(`${mode.name}: published RTP ${(rtp * 100).toFixed(4)}% is outside the 95%–96.5% target range`);
+  if (rtp > 0.967 + 0.00001 || rtp < 0.95) {
+    throw new Error(`${mode.name}: published RTP ${(rtp * 100).toFixed(4)}% is outside the 95%–96.7% target range`);
   }
   if (events && mode.name === 'unknown_bonus') {
     if (events.some((event) => !event.events[0].bonusTriggered || ![3, 4, 5, 6].includes(event.events[0].scatterCount))) {
@@ -108,9 +112,18 @@ for (const mode of index.modes) {
     if (fiveScatterWeight !== 110_000_000_000 || sixScatterWeight !== 1_000_000_000) {
       throw new Error('unknown_bonus: scatter outcome shares differ from the advertised 11% / 0.1%');
     }
+    const hasFiveScatterTop = rows.some((row, index) =>
+      Number(row[1]) > 0 && [2_498_800, 2_500_000].includes(Number(row[2])) && events[index].events[0].scatterCount === 5
+    );
+    const hasSixScatterTop = rows.some((row, index) =>
+      Number(row[1]) > 0 && Number(row[2]) === 5_000_000 && events[index].events[0].scatterCount === 6
+    );
+    if (!hasFiveScatterTop || !hasSixScatterTop) {
+      throw new Error('unknown_bonus: missing the 24,988x–25,000x five-scatter or 50,000x six-scatter top payout');
+    }
   }
   const expectedTierWeights = {
-    bonus_chance: [995_000_000_000, 3_000_000_000, 1_500_000_000, 500_000_000],
+    bonus_chance: [950_000_000_000, 49_500_000_000, 400_000_000, 100_000_000],
     super_bonus: [992_500_000_000, 3_375_000_000, 3_000_000_000, 1_125_000_000],
     pirates_chance: [987_500_000_000, 1_875_000_000, 3_125_000_000, 7_500_000_000],
   };

@@ -51,26 +51,32 @@ let preloadPromise: Promise<void> | undefined;
 
 function preloadImage(source: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => resolve(), 5_000);
     const image = new Image();
     // A successful load means the browser has already decoded the image enough
     // to paint it. Waiting on decode() here can hang the entire first-load gate
     // on otherwise valid large PNG artwork in some browsers.
-    image.onload = () => resolve();
-    image.onerror = () => reject(new Error(`Could not load game image: ${source}`));
+    image.onload = () => { clearTimeout(timeout); resolve(); };
+    image.onerror = () => { clearTimeout(timeout); reject(new Error(`Could not load game image: ${source}`)); };
     image.src = source;
-    if (image.complete && image.naturalWidth > 0) resolve();
+    if (image.complete && image.naturalWidth > 0) {
+      clearTimeout(timeout);
+      resolve();
+    }
   });
 }
 
 export function preloadGameAssets(): Promise<void> {
   if (!preloadPromise) {
     preloadPromise = Promise.all([
-      ...GAME_IMAGES.map(preloadImage),
-      soundManager.preloadMusic(),
+      ...GAME_IMAGES.map((source) => preloadImage(source).catch(() => undefined)),
     ]).then(() => undefined).catch((error) => {
       preloadPromise = undefined;
       throw error;
     });
+    // Network audio readiness varies by browser and connection. It should never
+    // hold the game behind the loading screen; playback can finish loading later.
+    void soundManager.preloadMusic();
   }
   return preloadPromise;
 }

@@ -10,16 +10,16 @@ export declare const SYMBOL_METAS: Record<SymbolId, SymbolMeta>;
 export declare const PAYLINES: [number, number][][];
 export declare const BASE_REEL_STRIPS: SymbolId[][];
 export type PlayMode = 'base' | 'bonus_chance' | 'super_bonus' | 'pirates_chance' | 'feature_spin' | 'unknown_bonus' | 'unknown_extreme';
-export declare const MAX_RTP_PERCENT = 96.5;
+export declare const MAX_RTP_PERCENT = 96.7;
 export declare const STANDARD_MAX_WIN_MULTIPLIER = 25000;
 export declare const EXTREME_MAX_WIN_MULTIPLIER = 50000;
 export declare const UNKNOWN_BONUS_MAX_WIN_MULTIPLIER = 50000;
 export declare const MAX_WIN_TRIGGER_ODDS: Record<PlayMode, number>;
 export declare const BONUS_OUTCOME_ODDS: {
     readonly bonus_chance: {
-        readonly three: 0.6;
-        readonly four: 0.3;
-        readonly five: 0.1;
+        readonly three: 0.99;
+        readonly four: 0.008;
+        readonly five: 0.002;
     };
     readonly super_bonus: {
         readonly three: 0.45;

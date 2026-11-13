@@ -2,7 +2,7 @@
 Sea Raider — Stake Engine math publisher.
 
 Builds fun, frequent-win distributions that:
-  • target ~96.5% RTP
+  • target 96.7% RTP
   • keep base hit-rate around 30%
   • pass Stake risk checks (CVaR / tail liability)
   • emit index.json + CSV lookup + jsonl.zst books
@@ -20,7 +20,7 @@ import zstandard as zstd
 ROOT = Path(__file__).parent
 PUBLISH_ROOT = ROOT / "publish_files"
 TOTAL_WEIGHT = 1_000_000_000_000  # 1e12 — matches Stake SDK convention
-TARGET_RTP = 0.964
+TARGET_RTP = 0.967
 RNG = random.Random(42)
 FRAME_RNG = random.Random(20261106)
 WILD_SURGE_WILDS_PER_LINE = {"curse": 5, "ghost": 20, "legend": 45, "ethereal": 30}
@@ -58,7 +58,7 @@ PAYLINES = [
 MODES = [
     # name, cost, max_win_x, hit_rate_target
     ("base", 1.0, 25_000, 0.30),
-    ("bonus_chance", 1.5, 25_000, 0.34),
+    ("bonus_chance", 3.0, 25_000, 0.72),
     ("super_bonus", 5.0, 25_000, 0.42),
     ("pirates_chance", 25.0, 25_000, 0.55),
     ("feature_spin", 10.0, 25_000, 0.70),
@@ -217,7 +217,11 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
         if total <= max_allowed and (chosen is None or total > chosen[1]):
             chosen = (values, total)
 
-    is_max_win_row = math.isclose(booked_payout_x, cap, rel_tol=0, abs_tol=0.051)
+    exact_jackpot_values = [cap]
+    is_jackpot_row = any(
+        math.isclose(booked_payout_x, value, rel_tol=0, abs_tol=0.051)
+        for value in exact_jackpot_values
+    )
     if chosen is None:
         # A tier's minimum start can make its booked target too small for the
         # previous scaling fit. Keep the generated feature progression and let
@@ -245,10 +249,10 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
             options.add(upper + offset * 10)
         return sorted(option for option in options if option <= cap)
 
-    if is_max_win_row:
-        # Keep the max-win endpoint exact while restricting every stop to the
-        # published ladder. Nearby rungs are enough for a compact exact search.
-        target_units = int(round(cap / 0.2))
+    if is_jackpot_row:
+        # Keep the feature cap exact while restricting every stop to the
+        # selectable multiplier ladder. Intermediate tiers settle naturally.
+        target_units = int(round(booked_payout_x / 0.2))
         multipliers = None
         for radius in range(5):
             states: dict[tuple[int, int], list[int]] = {(minimum_start, 0): []}
@@ -275,7 +279,7 @@ def calibrate_bonus_frame_multipliers(event: dict, booked_payout_x: float) -> fl
             if multipliers is not None:
                 break
         if multipliers is None:
-            raise ValueError(f"could not reach the {cap}x cap with selectable multiplier stops")
+            raise ValueError(f"could not reach the {booked_payout_x:.1f}x jackpot with selectable multiplier stops")
     else:
         previous = minimum_start
         multipliers = []
@@ -354,10 +358,10 @@ def board_for_outcome(mode: str, payout_x: float, max_win: int, bonus_tier: str 
     result = "no_win"
 
     if mode == "unknown_bonus":
-        # This purchase always triggers a bonus. Reserve the 50,000x tier for
-        # six scatters; all other feature outcomes stay at or below 25,000x.
-        result = "max_hunt" if payout_x >= 25_000 else "bonus_win"
-        if bonus_tier == "ethereal" or (bonus_tier is None and payout_x >= 25_000):
+        # Six scatters unlock the 50,000x Ethereal cap; five-scatter outcomes
+        # settle naturally at up to 24,988x on the published paylines.
+        result = "max_hunt" if payout_x >= 50_000 else "bonus_win"
+        if bonus_tier == "ethereal" or (bonus_tier is None and payout_x >= 50_000):
             scatter_count, bonus_type, spins, wild_mult = 6, "ethereal", 10, 10
             mystery = "ETHEREAL CATACLYSM! 6 SCATTERS!"
         else:
@@ -834,17 +838,17 @@ def jackpot_ladder(name: str, max_win: int) -> list[tuple[float, float]]:
             ]
         # unknown_bonus
         return [
-            (12_500, 1 / 1_500),
+            (12_500, 1 / 2_500),
             (25_000, 1 / 4_000),
             (35_000, 1 / 8_000),
-            (50_000, 1 / 12_000),
+            (50_000, 1 / 5_000),
         ]
     # Standard 25,000x modes
     ladders = {
         "bonus_chance": [
             (5_000, 1 / 75_000),
             (10_000, 1 / 225_000),
-            (25_000, 1 / 750_000),
+            (25_000, 1 / 200_000),
         ],
         "base": [
             (5_000, 1 / 50_000),
@@ -1067,8 +1071,8 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                                 ("none", 850_000_000_000)),
             "base": (("legend", 28_666_666), ("curse", 1_823_513_790),
                      ("none", 998_147_819_544)),
-            "bonus_chance": (("legend", 500_000_000), ("ghost", 1_500_000_000),
-                             ("curse", 3_000_000_000), ("none", 995_000_000_000)),
+            "bonus_chance": (("legend", 100_000_000), ("ghost", 400_000_000),
+                             ("curse", 49_500_000_000), ("none", 950_000_000_000)),
             "super_bonus": (("legend", 1_125_000_000), ("ghost", 3_000_000_000),
                             ("curse", 3_375_000_000), ("none", 992_500_000_000)),
             "pirates_chance": (("legend", 7_500_000_000), ("ghost", 3_125_000_000),
@@ -1077,7 +1081,14 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
         tiers = tier_plans[name]
         for tier, target in tiers:
             need = target
-            if name in ("base", "bonus_chance") and tier in ("curse", "ghost"):
+            if name == "unknown_bonus" and tier == "ethereal":
+                # Reserve the five-scatter 25k booked tier for Legend.
+                order = sorted(
+                    (i for i in range(len(remaining)) if remaining[i][0] != 25_000.0),
+                    key=lambda i: remaining[i][0],
+                    reverse=True,
+                )
+            elif name in ("base", "bonus_chance") and tier in ("curse", "ghost"):
                 # Keep the common 3-scatter feature in a satisfying mid-win
                 # band instead of assigning every trigger to the extreme tail.
                 target_band = (50.0 if tier == "curse" else 250.0) * cost
@@ -1176,6 +1187,8 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     # Restore the target RTP by adjusting precomputed feature round values.
     # The visible boards are calibrated to those values as real line wins below.
     jackpot_units = {x_to_payout(px) for px, _ in jackpot_ladder(name, max_win)}
+    if name == "unknown_bonus":
+        jackpot_units.add(x_to_payout(25_000))
     target_weighted_units = round(TARGET_RTP * cost * 100 * TOTAL_WEIGHT)
     def rows_at_feature_scale(scale: float) -> list[tuple[int, int, int]]:
         scaled_rows = []
@@ -1346,10 +1359,13 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                 raise ValueError(
                     f"{name}: integer-multiplier bonus total {visible_total:.1f}x violates its {floor}x–{cap}x limits"
                 )
-            is_cap_row = payout == x_to_payout(cap)
-            if is_cap_row and adjusted_payout != payout:
+            is_jackpot_row = (
+                payout == x_to_payout(cap)
+                or (name == "unknown_bonus" and payout == x_to_payout(24_988))
+            )
+            if is_jackpot_row and adjusted_payout != payout:
                 raise ValueError(
-                    f"{name}: whole-number paylines cannot exactly reach the {payout / 100:.1f}x max-win row"
+                    f"{name}: whole-number paylines cannot exactly reach the {payout / 100:.1f}x jackpot row"
                 )
             sim_id, weight, _ = rows[row_idx]
             rows[row_idx] = (sim_id, weight, adjusted_payout)
@@ -1359,6 +1375,9 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     # Rebalance probability mass only within the same scatter-count class.
     # This keeps bonus/scatter hit rates, zero-win frequency, and max-win odds
     # intact after multiplier stops change the exact line payouts.
+    jackpot_units = {x_to_payout(px) for px, _ in jackpot_ladder(name, max_win)}
+    if name == "unknown_bonus":
+        jackpot_units.add(x_to_payout(24_988))
     cap_by_row = [
         x_to_payout(50_000 if event["events"][0].get("scatterCount") == 6 else max_win)
         for event in events
@@ -1384,6 +1403,7 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
                 i for i in indices
                 if rows[i][2] > 0
                 and rows[i][2] != cap_by_row[i]
+                and rows[i][2] not in jackpot_units
                 and rows[i][1] > 0
             ]
             for source in flexible:
