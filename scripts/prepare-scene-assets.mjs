@@ -183,6 +183,101 @@ async function buildSeaMask() {
     .toFile(path.join(outDir, 'sea-mask.png'));
 }
 
+// ---------------------------------------------------------------------------
+// Swashbuckler (artwork-source/swashbuckler.webp, 1199x1312): split the sword
+// forearm from the body so it can swing from the elbow, and paint the coat back
+// in where the forearm used to cover it.
+// ---------------------------------------------------------------------------
+const ARM_POLY = [
+  [405, 540], [470, 512], [552, 528], [556, 600], [532, 652], [516, 700], [530, 742], [518, 795],
+  [480, 832], [330, 935], [200, 992], [80, 992], [80, 930], [330, 770], [335, 700], [360, 655],
+  [392, 642], [388, 598],
+];
+const PIRATE_SCALE = 0.62;
+
+function inPolygon(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+// Behind the forearm sits the coat: its left edge runs from (555, 600) by the belt
+// down to (510, 700) and then along the skirt to (360, 905). Left of it is open air
+// (including the gap between the cuff and the torso).
+function coatBehind(x, y) {
+  if (y < 600 || y > 905) return false;
+  if (y < 700) return x >= 555 - (y - 600) * (45 / 100);
+  return x >= 510 - (y - 700) * (150 / 205);
+}
+
+async function buildSwashbuckler() {
+  const src = await loadRaw(path.join(root, 'artwork-source/swashbuckler.webp'));
+  const { width, height, data } = src;
+  const body = Buffer.from(data);
+  const arm = Buffer.alloc(data.length);
+  const hole = new Uint8Array(width * height);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!inPolygon(x + 0.5, y + 0.5, ARM_POLY)) continue;
+      const i = (y * width + x) * 4;
+      arm[i] = data[i]; arm[i + 1] = data[i + 1]; arm[i + 2] = data[i + 2]; arm[i + 3] = data[i + 3];
+      body[i + 3] = 0;
+      if (coatBehind(x, y)) hole[y * width + x] = 1;
+    }
+  }
+
+  // Push-pull fill: grow the surrounding coat colours inward until the hole is closed.
+  const filledOnce = new Uint8Array(width * height);
+  let remaining = hole.reduce((a, b) => a + b, 0);
+  for (let pass = 0; pass < 400 && remaining > 0; pass++) {
+    const filled = [];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const k = y * width + x;
+        if (!hole[k]) continue;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const nk = k + dy * width + dx;
+            if (hole[nk]) continue;
+            const ni = nk * 4;
+            if (body[ni + 3] < 200) continue;
+            // Grow only the dark coat cloth, not the gold trim along its edge.
+            if (!filledOnce[nk] && body[ni] * 0.3 + body[ni + 1] * 0.59 + body[ni + 2] * 0.11 > 95) continue;
+            r += body[ni]; g += body[ni + 1]; b += body[ni + 2]; n++;
+          }
+        }
+        if (n >= 2) filled.push([k, r / n, g / n, b / n]);
+      }
+    }
+    for (const [k, r, g, b] of filled) {
+      const i = k * 4;
+      body[i] = r; body[i + 1] = g; body[i + 2] = b; body[i + 3] = 255;
+      hole[k] = 0;
+      filledOnce[k] = 1;
+    }
+    remaining -= filled.length;
+    if (filled.length === 0) break;
+  }
+
+  const outW = Math.round(width * PIRATE_SCALE);
+  for (const [name, buf] of [['swashbuckler-body', body], ['swashbuckler-arm', arm]]) {
+    await sharp(buf, { raw: { width, height, channels: 4 } })
+      .resize(outW)
+      .webp({ quality: 88, alphaQuality: 100 })
+      .toFile(path.join(outDir, `${name}.webp`));
+  }
+  return { width, height };
+}
+
+const pirate = await buildSwashbuckler();
+console.log(`swashbuckler layers ${pirate.width}x${pirate.height} -> scale ${PIRATE_SCALE}`);
+
 const frame = await loadRaw(path.join(root, 'public/assets/aistudio/frame_e548f7c1.png'));
 const wheelSize = await buildHelmWheel(frame);
 await buildFrameWithoutWheel(frame);

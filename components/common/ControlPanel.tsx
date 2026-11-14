@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AudioLines, BookOpen, Menu as MenuIcon, Music2, Repeat, Volume2, VolumeX } from 'lucide-react';
+import { AudioLines, BookOpen, Menu as MenuIcon, Music2, Repeat, Square, Volume2, VolumeX } from 'lucide-react';
 import { PlayMode, MODE_CONFIGS } from '../../lib/slot-engine';
 import { formatMoney, toSocialText } from '../../lib/currency';
 import { soundManager, AudioState } from '../../lib/audio';
@@ -150,6 +150,18 @@ export default function ControlPanel(props: ControlPanelProps) {
               <span className="hidden sm:inline">SKIP BONUS</span><span className="sm:hidden">SKIP</span>
             </button>
           )}
+          {/* Autoplay sits right beside the spin button; it becomes STOP while running. */}
+          {!isBonusActive && (isAutoActive ? (
+            <button type="button" onClick={onStopAuto} className="console-autocoin console-autocoin--stop" title="Stop autoplay" aria-label={`Stop autoplay, ${autoSpinsRemaining} spins left`}>
+              <Square size={13} strokeWidth={0} fill="currentColor" />
+              <span className="console-autocoin__label tabular-nums">{autoSpinsRemaining}</span>
+            </button>
+          ) : (
+            <button type="button" onClick={onOpenAuto} disabled={isSpinning || isSimulationPaused} title={toSocialText('Auto Play Settings', isSocial)} aria-label={toSocialText('Autoplay', isSocial)} className="console-autocoin">
+              <Repeat size={15} strokeWidth={2.8} />
+              <span className="console-autocoin__label">AUTO</span>
+            </button>
+          ))}
         </div>
 
         <div className="console-right flex min-w-0 items-center justify-self-stretch gap-1.5 sm:gap-3">
@@ -159,11 +171,6 @@ export default function ControlPanel(props: ControlPanelProps) {
           </div>
 
           <div className="console-actions flex shrink-0 items-center gap-1 sm:gap-1.5" ref={audioMenuRef}>
-            {isAutoActive ? (
-              <button onClick={onStopAuto} className="console-stop" title="Stop autoplay">STOP <span className="hidden sm:inline tabular-nums">{autoSpinsRemaining}</span></button>
-            ) : (
-              <button onClick={onOpenAuto} disabled={isSpinning || isBonusActive || isSimulationPaused} title={toSocialText('Auto Play Settings', isSocial)} className="console-auto"><Repeat size={12} strokeWidth={2.6} className="hidden sm:inline" /> AUTO</button>
-            )}
             <button onClick={() => { soundManager.startMusic(); setIsAudioMenuOpen((open) => !open); }} title="Audio & Volume Settings" aria-label="Audio settings" className={`console-icon-button ${audioState.masterMuted ? 'console-icon-button--muted' : ''}`}>
               {audioState.masterMuted ? <VolumeX size={17} /> : <Volume2 size={17} />}
             </button>
