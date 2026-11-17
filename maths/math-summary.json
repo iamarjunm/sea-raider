@@ -12,32 +12,32 @@
     "bonus_chance": {
       "cost": 5.0,
       "rtp": 0.967,
-      "hitRate": 0.720023,
-      "volatility": 15.0685,
-      "cvarRel": 254.9507,
-      "rtpFrom40xCost": 0.2457
+      "hitRate": 0.4,
+      "volatility": 13.211,
+      "cvarRel": 221.207,
+      "rtpFrom40xCost": 0.3696
     },
     "super_bonus": {
       "cost": 7.0,
       "rtp": 0.967,
       "hitRate": 0.558984,
-      "volatility": 14.0775,
-      "cvarRel": 280.5832,
-      "rtpFrom40xCost": 0.4588
+      "volatility": 11.9581,
+      "cvarRel": 234.914,
+      "rtpFrom40xCost": 0.4126
     },
     "pirates_chance": {
       "cost": 25.0,
       "rtp": 0.967,
       "hitRate": 0.55014,
-      "volatility": 7.6407,
-      "cvarRel": 157.0827,
-      "rtpFrom40xCost": 0.372
+      "volatility": 7.1469,
+      "cvarRel": 141.3699,
+      "rtpFrom40xCost": 0.351
     },
     "feature_spin": {
       "cost": 10.0,
       "rtp": 0.967,
       "hitRate": 0.686569,
-      "volatility": 10.2498,
+      "volatility": 10.2352,
       "cvarRel": 96.4545,
       "rtpFrom40xCost": 0.0924
     },
@@ -45,17 +45,17 @@
       "cost": 250.0,
       "rtp": 0.967,
       "hitRate": 1.0,
-      "volatility": 3.7237,
-      "cvarRel": 82.8478,
-      "rtpFrom40xCost": 0.0674
+      "volatility": 4.3022,
+      "cvarRel": 106.2386,
+      "rtpFrom40xCost": 0.1248
     },
     "unknown_extreme": {
       "cost": 500.0,
       "rtp": 0.967,
-      "hitRate": 0.232289,
-      "volatility": 3.8202,
-      "cvarRel": 46.6896,
-      "rtpFrom40xCost": 0.0952
+      "hitRate": 0.15,
+      "volatility": 4.046,
+      "cvarRel": 65.4,
+      "rtpFrom40xCost": 0.0935
     }
   }
 }

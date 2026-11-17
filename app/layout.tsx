@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { Cinzel, IM_Fell_English, Pirata_One } from 'next/font/google';
 import './globals.css';
 import './scene.css';
+import './styles/hud.css';
+import './styles/reels.css';
+import './styles/scene-fx.css';
+import './styles/overlays.css';
 
 const pirata = Pirata_One({ weight: '400', subsets: ['latin'], variable: '--font-pirate', display: 'swap' });
 const cinzel = Cinzel({ weight: ['600', '700', '900'], subsets: ['latin'], variable: '--font-engraved', display: 'swap' });

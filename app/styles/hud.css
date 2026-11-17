@@ -1,0 +1,1778 @@
+/* ==========================================================================
+   HUD, Universal Bet Bar, Autoplay, Game Menu & Paytable Overrides
+   Loaded after scene.css — Matte Carved Wood & Brushed Aged Brass Theme
+   ========================================================================== */
+
+:root {
+  --hud-wood-top: #382211;
+  --hud-wood-mid: #26160a;
+  --hud-wood-bot: #160c05;
+  --hud-ebony-top: #100a06;
+  --hud-ebony-bot: #181009;
+  --hud-slate-top: #0e151b;
+  --hud-slate-bot: #090e12;
+  --hud-brass-hi: #dfba73;
+  --hud-brass: #b58538;
+  --hud-brass-mid: #875f21;
+  --hud-brass-lo: #4a300d;
+  --hud-teal-hi: #48c9cf;
+  --hud-teal: #177b85;
+  --hud-teal-lo: #073840;
+  --hud-ivory: #f4ead5;
+  --hud-gold-text: #f2c464;
+  --hud-muted-text: #b8a382;
+}
+
+/* ==========================================================================
+   1. UNIVERSAL BET BAR (Matte Carved Wood + Matte Brushed Brass, Zero Wiggle)
+   ========================================================================== */
+
+html #game-surface .game-console {
+  min-height: 88px;
+  height: 88px;
+  border-radius: 18px;
+  /* Matte carved walnut planks — no glossy white specular highlights */
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 21px,
+      rgba(0, 0, 0, 0.34) 21px 22px,
+      rgba(210, 160, 90, 0.03) 22px 23px
+    ),
+    var(--wood-grain),
+    linear-gradient(180deg, var(--hud-wood-top) 0%, var(--hud-wood-mid) 54%, var(--hud-wood-bot) 100%);
+  background-size: auto, 400px 120px, auto;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(223, 186, 115, 0.12),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.55);
+  /* Prevent any layout or frame jitter */
+  transform: translateZ(0) !important;
+  animation: none !important;
+  transition: none !important;
+  will-change: auto;
+}
+
+html #game-surface .game-console::before {
+  content: '';
+  position: absolute;
+  inset: -2.5px;
+  z-index: -1;
+  border-radius: 20.5px;
+  padding: 2.5px;
+  pointer-events: none;
+  /* Matte aged-brass trim ring */
+  background: linear-gradient(
+    180deg,
+    #b58538 0%,
+    #7d571e 38%,
+    #462d0c 72%,
+    #734f1a 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+html #game-surface .console-rivet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 38% 35%, #b58538 0%, #6d4916 62%, #2c1906 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+html #game-surface .console-rivet--tl { left: 9px; top: 9px; }
+html #game-surface .console-rivet--tr { right: 9px; top: 9px; }
+html #game-surface .console-rivet--bl { left: 9px; bottom: 9px; }
+html #game-surface .console-rivet--br { right: 9px; bottom: 9px; }
+
+html #game-surface .console-left {
+  width: 100%;
+  justify-self: start;
+}
+
+html #game-surface .console-right {
+  width: 100%;
+  justify-self: end !important;
+  justify-content: flex-end;
+}
+
+html #game-surface .console-nav {
+  padding-right: 10px;
+  border-right: 1px solid rgba(181, 133, 56, 0.22);
+}
+
+/* Inset Matte Dark Panels: BALANCE/AMOUNT & WIN */
+html #game-surface .console-wallet,
+html #game-surface .console-win {
+  border-radius: 11px;
+  background: linear-gradient(180deg, var(--hud-ebony-top) 0%, var(--hud-ebony-bot) 100%);
+  border: 1px solid rgba(181, 133, 56, 0.34) !important;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.88),
+    0 1px 0 rgba(223, 186, 115, 0.08);
+  transform: none !important;
+  animation: none !important;
+}
+
+html #game-surface .console-wallet {
+  flex: 1 1 310px;
+  max-width: 350px;
+  padding: 6px 13px 5px;
+}
+
+html #game-surface .console-bet-line {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(181, 133, 56, 0.18);
+}
+
+html #game-surface .console-label {
+  font-family: var(--font-engraved), serif;
+  color: #c8a25c;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+html #game-surface .console-balance {
+  color: var(--hud-ivory);
+  font-size: 18px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+html #game-surface .console-play-amount {
+  color: var(--hud-gold-text);
+  font-size: 19px;
+  line-height: 1.05;
+  font-weight: 900;
+  min-width: 4.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+html #game-surface .console-cost {
+  margin-top: 2px;
+  color: #8ea5a6;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Matte Brushed-Brass Stepper Discs (− / +) */
+html #game-surface .console-stepper {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #d4a652;
+  cursor: pointer;
+  background: radial-gradient(circle at 40% 32%, #cfa04c 0%, #966822 58%, #5c3c0e 100%);
+  color: #1c0f05;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 232, 175, 0.32);
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), filter 0.12s ease;
+}
+html #game-surface .console-stepper span {
+  transform: translateY(-0.5px);
+}
+html #game-surface .console-stepper:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: scale(1.06);
+}
+html #game-surface .console-stepper:active:not(:disabled) {
+  transform: scale(0.92);
+}
+html #game-surface .console-stepper:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  filter: grayscale(0.55);
+}
+
+/* Round Matte Brass Icon Buttons (Menu, Info, Sound) */
+html #game-surface .console-icon-button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: linear-gradient(180deg, #2d1b0d 0%, #170d06 100%);
+  border: 1.5px solid var(--hud-brass);
+  color: #e8c478;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(223, 186, 115, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), color 0.14s ease, border-color 0.14s ease;
+}
+html #game-surface .console-icon-button:hover {
+  transform: translateY(-1px);
+  color: #f9e5b4;
+  border-color: #d6a650;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(223, 186, 115, 0.24);
+}
+html #game-surface .console-icon-button:active {
+  transform: scale(0.93);
+}
+html #game-surface .console-icon-button--muted {
+  border-color: #a94438;
+  color: #f0a399;
+}
+
+/* Centre: Helm-Wheel Spin Button + Compact Linear Autoplay Button */
+html #game-surface .console-center {
+  min-width: 176px;
+}
+
+html #game-surface .console-spin {
+  width: 102px;
+  height: 102px;
+  margin-block: -22px;
+  padding: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  color: var(--hud-ivory);
+  transition: transform 0.15s cubic-bezier(0.22, 1.3, 0.36, 1);
+}
+html #game-surface .console-spin__helm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 122%;
+  z-index: 0;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.75));
+}
+html #game-surface .console-spin__medallion {
+  position: absolute;
+  inset: 21%;
+  z-index: 1;
+  border-radius: 50%;
+  /* Satin sea-glass teal medallion with matte aged-brass bezel */
+  background: radial-gradient(circle at 50% 32%, #31aeb5 0%, #14747e 48%, #083d45 84%, #042329 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(205, 250, 248, 0.26),
+    inset 0 -6px 10px rgba(0, 0, 0, 0.6),
+    0 0 0 2.5px #c89643,
+    0 0 0 4.5px #4e320d,
+    0 3px 10px rgba(0, 0, 0, 0.75);
+  transition: filter 0.18s ease, transform 0.15s ease;
+  overflow: hidden;
+}
+html #game-surface .console-spin__medallion::after {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  opacity: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 50deg,
+    rgba(165, 245, 242, 0.28) 80deg,
+    transparent 120deg,
+    transparent 230deg,
+    rgba(165, 245, 242, 0.22) 260deg,
+    transparent 300deg
+  );
+  transition: opacity 0.2s ease;
+}
+
+html #game-surface .console-spin-label {
+  font-family: var(--font-pirate), serif;
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #f9f0dc;
+  text-shadow: 0 2px 0 #042329, 0 0 8px rgba(60, 210, 215, 0.3);
+}
+html #game-surface .console-spin-count {
+  margin-top: 1px;
+  font-family: var(--font-engraved), serif;
+  font-size: 9px;
+  font-weight: 900;
+  color: #f5dfae;
+  text-shadow: 0 1px 2px #000;
+}
+html #game-surface .console-spin-stop {
+  color: #f4ead5;
+  text-shadow: 0 1px 2px #031e24;
+}
+html #game-surface .console-spin-stop__icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
+}
+html #game-surface .console-spin-stop__label {
+  font-family: var(--font-engraved), serif;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: #d9f3f2;
+}
+
+html #game-surface .console-spin__ripple {
+  position: absolute;
+  inset: 19%;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  border: 1.5px solid rgba(85, 205, 210, 0.45);
+}
+html #game-surface .console-spin--ready .console-spin__ripple {
+  animation: spin-ripple 2.8s ease-out infinite;
+}
+html #game-surface .console-spin--ready .console-spin__ripple--late {
+  animation-delay: 1.4s;
+}
+html #game-surface .console-spin:not(:disabled):hover {
+  transform: scale(1.045);
+}
+html #game-surface .console-spin:not(:disabled):hover .console-spin__medallion {
+  filter: brightness(1.1);
+}
+html #game-surface .console-spin--pressed:not(:disabled),
+html #game-surface .console-spin:not(:disabled):active {
+  transform: scale(0.91, 0.89);
+  transition-duration: 0.05s;
+}
+html #game-surface .console-spin:disabled {
+  cursor: not-allowed;
+}
+html #game-surface .console-spin:disabled:not(.console-spin--spinning):not(.console-spin--bonus) .console-spin__medallion {
+  filter: grayscale(0.45) brightness(0.78);
+}
+
+/* Compact Linear Rounded-Rectangle Autoplay Button (placed to the right of Spin) */
+html #game-surface .console-autobtn {
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  min-width: 68px;
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1.5px solid var(--hud-brass);
+  color: #e8c478;
+  background: linear-gradient(180deg, #2d1b0d 0%, #170d06 100%);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(223, 186, 115, 0.16),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), color 0.14s ease, border-color 0.14s ease;
+}
+html #game-surface .console-autobtn__label {
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+html #game-surface .console-autobtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  color: #f9e5b4;
+  border-color: #d6a650;
+}
+html #game-surface .console-autobtn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+html #game-surface .console-autobtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  filter: grayscale(0.5);
+}
+html #game-surface .console-autobtn--stop {
+  color: #fff4e4;
+  border-color: #c85a48;
+  background: linear-gradient(180deg, #872319 0%, #4d100a 100%);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 195, 180, 0.22);
+  animation: none !important;
+}
+html #game-surface .console-autobtn--stop .console-autobtn__label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* Right Inset WIN Display — Matte finish, no glossy sweep, no jitter */
+html #game-surface .console-win {
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 240px !important;
+  max-width: 310px;
+  width: auto;
+  padding: 6px 14px 7px;
+}
+html #game-surface .console-win .console-label {
+  color: #c8a25c;
+}
+html #game-surface .console-win-amount {
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
+  color: var(--hud-ivory);
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  animation: none !important;
+  transform: none !important;
+}
+html #game-surface .console-win--hot {
+  background: linear-gradient(180deg, #160e07 0%, #211409 100%) !important;
+  border-color: rgba(212, 162, 76, 0.52) !important;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.78),
+    0 0 12px rgba(212, 162, 76, 0.16);
+  animation: none !important;
+}
+html #game-surface .console-win--hot::before {
+  display: none !important;
+}
+html #game-surface .console-win--hot .console-label {
+  color: #ebd08e;
+}
+html #game-surface .console-win--hot .console-win-amount {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: #f5cf76;
+  filter: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+html #game-surface .console-win--counting .console-win-amount {
+  animation: none !important;
+  color: #ffe094;
+}
+
+/* Audio Popover (Dark Wood & Matte Brass, Parchment-Free) */
+.hud-audio-popover {
+  border-radius: 12px;
+  background:
+    var(--wood-grain),
+    linear-gradient(180deg, #2a190c 0%, #170d06 100%);
+  border: 1.5px solid var(--hud-brass);
+  box-shadow:
+    0 0 0 2px #120a04,
+    0 16px 36px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(223, 186, 115, 0.16);
+  color: var(--hud-ivory);
+}
+.hud-audio-popover__title {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--hud-gold-text);
+}
+.hud-audio-popover__mute {
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-family: var(--font-engraved), serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border: 1px solid var(--hud-brass);
+  background: linear-gradient(180deg, #1b4f56 0%, #0d3136 100%);
+  color: #d8f6f5;
+}
+.hud-audio-popover__mute.is-muted {
+  border-color: #b44a3e;
+  background: linear-gradient(180deg, #731d15 0%, #440e09 100%);
+  color: #ffd4cc;
+}
+.hud-audio-range {
+  accent-color: #d4a44c;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Responsive Bet Bar Breakpoints (Desktop, Short Laptop, Landscape, Portrait)
+   ========================================================================== */
+
+/* Short wide screens (laptop 1024x576 and similar) */
+@media (min-width: 768px) and (min-height: 501px) and (max-height: 650px) {
+  html #game-surface .game-console {
+    min-height: 68px;
+    height: 68px;
+    padding-block: 4px;
+  }
+  html #game-surface .console-spin {
+    width: 80px;
+    height: 80px;
+    margin-block: -14px;
+  }
+  html #game-surface .console-wallet {
+    padding: 4px 12px 3px;
+  }
+  html #game-surface .console-balance {
+    font-size: 15px;
+  }
+  html #game-surface .console-play-amount {
+    font-size: 17px;
+  }
+  html #game-surface .console-win-amount {
+    font-size: 20px;
+  }
+  html #game-surface .console-win {
+    padding: 4px 12px 5px;
+  }
+  html #game-surface .console-stepper {
+    width: 23px;
+    height: 23px;
+    font-size: 15px;
+  }
+  html #game-surface .console-icon-button {
+    width: 34px;
+    height: 34px;
+  }
+  html #game-surface .console-autobtn {
+    min-width: 60px;
+    height: 30px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+}
+
+/* Landscape popouts / phones on their side (height <= 500, e.g. 800x450) */
+@media (min-width: 501px) and (max-height: 500px) {
+  html #game-surface .game-console {
+    min-height: 52px;
+    height: 52px;
+    padding: 3px 12px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+  html #game-surface .console-spin {
+    width: 58px;
+    height: 58px;
+    margin-block: -8px;
+  }
+  html #game-surface .console-spin-label {
+    font-size: 14px;
+  }
+  html #game-surface .console-center {
+    min-width: 0;
+    gap: 7px;
+  }
+  html #game-surface .console-wallet {
+    flex: 1 1 200px;
+    max-width: 245px;
+    padding: 3px 9px;
+  }
+  html #game-surface .console-bet-line {
+    margin-top: 2px;
+    padding-top: 2px;
+  }
+  html #game-surface .console-label {
+    font-size: 7px;
+  }
+  html #game-surface .console-balance {
+    font-size: 12.5px;
+  }
+  html #game-surface .console-play-amount {
+    font-size: 13.5px;
+    min-width: 3.8em;
+  }
+  html #game-surface .console-cost {
+    display: none;
+  }
+  html #game-surface .console-stepper {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+  html #game-surface .console-win {
+    flex: 1 1 150px !important;
+    max-width: 190px;
+    padding: 3px 9px 4px;
+  }
+  html #game-surface .console-win-amount {
+    font-size: 16px;
+  }
+  html #game-surface .console-icon-button {
+    width: 28px;
+    height: 28px;
+  }
+  html #game-surface .console-autobtn {
+    min-width: 52px;
+    height: 26px;
+    padding: 0 7px;
+    font-size: 8px;
+    border-radius: 7px;
+    gap: 3px;
+  }
+}
+
+/* Tiny popout (400x225) */
+@media (max-width: 500px) and (max-height: 500px) {
+  html #game-surface .game-console {
+    min-height: 42px;
+    height: 42px;
+    padding: 2px 8px;
+    gap: 5px;
+    border-radius: 12px;
+  }
+  html #game-surface .console-center {
+    min-width: 0;
+    gap: 4px;
+  }
+  html #game-surface .console-spin {
+    width: 44px;
+    height: 44px;
+    margin-block: -5px;
+  }
+  html #game-surface .console-spin-label {
+    font-size: 10px;
+  }
+  html #game-surface .console-autobtn {
+    min-width: 42px;
+    height: 22px;
+    padding: 0 5px;
+    font-size: 7px;
+    border-radius: 5px;
+    gap: 2px;
+  }
+  html #game-surface .console-win {
+    max-width: none;
+    padding: 2px 6px;
+  }
+}
+
+/* Mobile Portrait (425x812, 375x667, 320x568): Two-row console
+   Row 1: Wallet (left) + Win (right)
+   Row 2: Nav (Menu + Info) | Spin + Auto (center) | Sound (right) */
+@media (max-width: 500px) and (min-height: 501px) {
+  html #game-surface .game-console {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      'wallet wallet wallet win win win'
+      'nav nav spin spin spin actions';
+    row-gap: 6px;
+    column-gap: 6px;
+    min-height: 0;
+    height: auto;
+    padding: 8px 10px 6px;
+    border-radius: 16px;
+  }
+  html #game-surface .console-left,
+  html #game-surface .console-right {
+    display: contents;
+  }
+  html #game-surface .console-nav {
+    display: flex;
+    grid-area: nav;
+    justify-self: start;
+    padding-right: 0;
+    border-right: 0;
+    gap: 6px;
+  }
+  html #game-surface .console-wallet {
+    grid-area: wallet;
+    max-width: none;
+    padding: 6px 9px 5px;
+  }
+  html #game-surface .console-win {
+    grid-area: win;
+    max-width: none;
+    width: auto;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  html #game-surface .console-center {
+    grid-area: spin;
+    min-width: 0;
+    justify-self: center;
+    gap: 8px;
+  }
+  html #game-surface .console-actions {
+    grid-area: actions;
+    justify-self: end;
+    gap: 6px;
+  }
+  html #game-surface .console-spin {
+    width: 70px;
+    height: 70px;
+    margin-block: -4px -2px;
+  }
+  html #game-surface .console-spin-label {
+    font-size: 16px;
+  }
+  html #game-surface .console-autobtn {
+    min-width: 58px;
+    height: 32px;
+    padding: 0 9px;
+    font-size: 9.5px;
+    border-radius: 8px;
+  }
+  html #game-surface .console-icon-button {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+@media (max-width: 360px) and (min-height: 501px) {
+  html #game-surface .game-console {
+    grid-template-areas:
+      'wallet wallet wallet wallet win win'
+      'nav nav spin spin spin actions';
+  }
+  html #game-surface .console-spin {
+    width: 62px;
+    height: 62px;
+  }
+  html #game-surface .console-autobtn {
+    min-width: 52px;
+    height: 29px;
+    padding: 0 7px;
+    font-size: 8.5px;
+  }
+  html #game-surface .console-icon-button {
+    width: 31px;
+    height: 31px;
+  }
+}
+
+/* ==========================================================================
+   2. SHARED HUD CABINET MODALS (Autoplay, Paytable & Rules, Captain's Log)
+   ========================================================================== */
+
+.hud-modal-overlay {
+  background: radial-gradient(ellipse at center, rgba(4, 12, 18, 0.72) 0%, rgba(1, 4, 8, 0.92) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hud-cabinet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  color: var(--hud-ivory);
+  border-radius: 16px;
+  overflow: hidden;
+  /* Matte carved wood outer frame with deep obsidian core */
+  background:
+    var(--wood-grain),
+    linear-gradient(180deg, #2b190c 0%, #1a0f07 48%, #110904 100%);
+  background-size: 400px 120px, auto;
+  border: 2px solid var(--hud-brass);
+  box-shadow:
+    0 0 0 3px #180d05,
+    0 0 0 4.5px #6f4d19,
+    0 28px 70px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(223, 186, 115, 0.2);
+}
+
+.hud-cabinet__bracket {
+  position: absolute;
+  z-index: 3;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  border: 2.5px solid #d4a652;
+  opacity: 0.85;
+}
+.hud-cabinet__bracket--tl { left: 6px; top: 6px; border-right: 0; border-bottom: 0; border-radius: 9px 0 0 0; }
+.hud-cabinet__bracket--tr { right: 6px; top: 6px; border-left: 0; border-bottom: 0; border-radius: 0 9px 0 0; }
+.hud-cabinet__bracket--bl { left: 6px; bottom: 6px; border-right: 0; border-top: 0; border-radius: 0 0 0 9px; }
+.hud-cabinet__bracket--br { right: 6px; bottom: 6px; border-left: 0; border-top: 0; border-radius: 0 0 9px 0; }
+
+.hud-kicker {
+  font-family: var(--font-engraved), serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #6fd4d0;
+  line-height: 1.1;
+}
+
+.hud-title {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.05;
+  margin-top: 2px;
+  color: var(--hud-gold-text);
+  text-shadow: 0 2px 0 #140b04;
+}
+
+.hud-close-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1.5px solid var(--hud-brass);
+  background: linear-gradient(180deg, #2e1b0d 0%, #170d06 100%);
+  color: #e8c478;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(223, 186, 115, 0.18);
+  transition: transform 0.12s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.hud-close-btn:hover {
+  transform: translateY(-1px);
+  color: #fff2cc;
+  border-color: #d8a952;
+}
+.hud-close-btn:active {
+  transform: scale(0.93);
+}
+
+/* ==========================================================================
+   3. AUTOPLAY & CAPTAIN'S LOG MODAL STYLES
+   ========================================================================== */
+
+.hud-autoplay {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100dvh - 20px);
+}
+
+.hud-autoplay__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(181, 133, 56, 0.22);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45));
+}
+
+.hud-autoplay__badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid var(--hud-brass);
+  background: radial-gradient(circle at 50% 30%, #1d6c75 0%, #093238 85%);
+  color: #d8f8f6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.hud-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 12px 18px 0;
+  padding: 4px;
+  border-radius: 10px;
+  background: #0d0804;
+  border: 1px solid rgba(181, 133, 56, 0.28);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.hud-segmented__btn {
+  position: relative;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  font-family: var(--font-engraved), serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244, 234, 213, 0.62);
+  transition: color 0.16s ease;
+}
+.hud-segmented__btn:hover {
+  color: var(--hud-ivory);
+}
+.hud-segmented__btn.is-active {
+  color: #1c0f04;
+}
+.hud-segmented__pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #dfba73 0%, #b58538 60%, #8c6220 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.5);
+}
+
+.hud-autoplay__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 18px 14px;
+  overflow-y: auto;
+}
+
+.hud-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #d6b066;
+}
+
+/* Spin Count Chips (10 / 25 / 50 / 100 / 250 / ∞) */
+.hud-spin-chips {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.hud-spin-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 54px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1.5px solid rgba(181, 133, 56, 0.34);
+  background: linear-gradient(180deg, #17100a 0%, #0f0a06 100%);
+  color: var(--hud-ivory);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75);
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.14s ease, background 0.14s ease;
+}
+.hud-spin-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(214, 166, 80, 0.65);
+}
+.hud-spin-chip:active {
+  transform: scale(0.95);
+}
+.hud-spin-chip.is-active {
+  border-color: #48c9cf;
+  background: linear-gradient(180deg, #124850 0%, #08272c 100%);
+  box-shadow:
+    0 0 0 1px rgba(72, 201, 207, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(190, 250, 248, 0.25);
+}
+.hud-spin-chip__num {
+  font-family: var(--font-engraved), serif;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--hud-ivory);
+}
+.hud-spin-chip.is-active .hud-spin-chip__num {
+  color: #fff6dc;
+}
+.hud-spin-chip__sub {
+  font-family: var(--font-engraved), serif;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #96a8ab;
+}
+.hud-spin-chip.is-active .hud-spin-chip__sub {
+  color: #8ee7e1;
+}
+
+/* Recessed Dark Obsidian Panel */
+.hud-inset-panel {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0e0a06 0%, #150e08 100%);
+  border: 1px solid rgba(181, 133, 56, 0.28);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+.hud-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 2px;
+  cursor: pointer;
+}
+.hud-toggle-row--compact {
+  padding: 6px 2px;
+}
+.hud-toggle-row__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hud-ivory);
+  line-height: 1.2;
+}
+.hud-toggle-row__sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #9a8d78;
+  line-height: 1.25;
+}
+
+/* Tactile Brass Switch */
+.hud-switch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: #0c0704;
+  border: 1.5px solid #6f4d19;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.hud-switch__thumb {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #e6c37a 0%, #a8792c 60%, #5c3c0e 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+  transition: transform 0.2s cubic-bezier(0.22, 1.3, 0.36, 1);
+}
+.hud-toggle-row.is-on .hud-switch {
+  background: linear-gradient(180deg, #125861 0%, #0a363c 100%);
+  border-color: #48c9cf;
+}
+.hud-toggle-row.is-on .hud-switch__thumb {
+  transform: translateX(20px);
+  background: radial-gradient(circle at 38% 32%, #fff6dc 0%, #d8a952 60%, #7d571e 100%);
+}
+
+/* Speed Chips */
+.hud-speed-chip {
+  padding: 7px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(181, 133, 56, 0.32);
+  background: #140c06;
+  font-family: var(--font-engraved), serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: #d6c3a0;
+  transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
+}
+.hud-speed-chip.is-active {
+  border-color: #48c9cf;
+  background: linear-gradient(180deg, #165a63 0%, #0b3339 100%);
+  color: #fff6dc;
+}
+
+/* Summary Strip (Parchment-Free Dark Ebony & Brass) */
+.hud-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #0d0804 0%, #140d07 100%);
+  border: 1px solid rgba(181, 133, 56, 0.36);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+.hud-summary-strip__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.hud-summary-strip__cell + .hud-summary-strip__cell {
+  border-left: 1px solid rgba(181, 133, 56, 0.18);
+  padding-left: 10px;
+}
+.hud-summary-strip__label {
+  font-family: var(--font-engraved), serif;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #b59457;
+  text-transform: uppercase;
+}
+.hud-summary-strip__value {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-autoplay__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 18px 16px;
+}
+
+.hud-warning-banner {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(215, 95, 75, 0.45);
+  background: rgba(95, 20, 12, 0.45);
+  font-size: 11.5px;
+  color: #ffcabf;
+  text-align: center;
+}
+
+.hud-primary-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 11px;
+  cursor: pointer;
+  border: 1.5px solid #d8a952;
+  background: linear-gradient(180deg, #218993 0%, #105860 55%, #08353b 100%);
+  color: #fff8e8;
+  font-family: var(--font-engraved), serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(195, 250, 248, 0.35);
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), filter 0.14s ease;
+}
+.hud-primary-cta:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.hud-primary-cta:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.hud-primary-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+.hud-primary-cta__badge {
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: rgba(4, 22, 26, 0.65);
+  border: 1px solid rgba(216, 169, 82, 0.45);
+  font-size: 11px;
+  color: var(--hud-gold-text);
+}
+
+/* Captain's Log Menu Rows */
+.hud-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #140d07 0%, #0e0905 100%);
+  border: 1px solid rgba(181, 133, 56, 0.28);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8);
+}
+.hud-menu-row__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--hud-brass);
+  background: linear-gradient(180deg, #2b1a0c 0%, #170d06 100%);
+  color: var(--hud-gold-text);
+}
+.hud-menu-row__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--hud-ivory);
+}
+.hud-menu-row__sub {
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: #9e8f77;
+}
+.hud-action-pill {
+  min-width: 74px;
+  padding: 7px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-engraved), serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--hud-brass);
+  background: linear-gradient(180deg, #2b190c 0%, #170d06 100%);
+  color: #e8c478;
+  transition: transform 0.12s ease, filter 0.14s ease;
+}
+.hud-action-pill:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.hud-action-pill:active {
+  transform: scale(0.95);
+}
+.hud-action-pill.is-active {
+  border-color: #48c9cf;
+  background: linear-gradient(180deg, #196872 0%, #0b383e 100%);
+  color: #e6fffe;
+}
+.hud-action-pill.is-gold {
+  border-color: #d8a952;
+  background: linear-gradient(180deg, #c6923a 0%, #865c1b 100%);
+  color: #190e04;
+}
+
+/* ==========================================================================
+   4. GAME RULES & PAYTABLE MODAL
+   ========================================================================== */
+
+.hud-paytable {
+  width: 100%;
+  max-width: 920px;
+  max-height: min(88dvh, 780px);
+}
+
+.hud-paytable__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(181, 133, 56, 0.26);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.52));
+}
+
+/* 4-Tab Bar — Carved Wood & Brass, Zero Horizontal Scroll */
+.hud-paytable__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px 20px;
+  background: #0e0905;
+  border-bottom: 1px solid rgba(181, 133, 56, 0.24);
+}
+
+.hud-paytable__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 8px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid rgba(181, 133, 56, 0.24);
+  background: linear-gradient(180deg, #1c1108 0%, #110a05 100%);
+  color: #b7a487;
+  font-family: var(--font-engraved), serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+.hud-paytable__tab:hover {
+  color: var(--hud-ivory);
+  border-color: rgba(214, 166, 80, 0.55);
+}
+.hud-paytable__tab.is-active {
+  color: #1b0e04;
+  border-color: #f0cb7d;
+  background: linear-gradient(180deg, #e2ba6d 0%, #b58538 62%, #8c6220 100%);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 246, 218, 0.55);
+}
+.hud-paytable__tab-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.hud-paytable__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 20px 22px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(23, 123, 133, 0.08), transparent 60%),
+    linear-gradient(180deg, #0d1217 0%, #090c10 100%);
+}
+
+.hud-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hud-section-title {
+  font-family: var(--font-engraved), serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hud-gold-text);
+}
+.hud-section-sub {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9eb0b5;
+}
+
+/* Badges */
+.hud-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  font-family: var(--font-engraved), serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hud-badge--teal {
+  background: rgba(23, 123, 133, 0.32);
+  border: 1px solid rgba(72, 201, 207, 0.45);
+  color: #8ee7e1;
+}
+.hud-badge--gold {
+  background: rgba(181, 133, 56, 0.24);
+  border: 1px solid rgba(214, 166, 80, 0.45);
+  color: #f2c464;
+}
+
+/* Special Symbol Cards (Wild & Scatter) */
+.hud-special-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #16100b 0%, #0f0b08 100%);
+  border: 1.5px solid rgba(181, 133, 56, 0.4);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(223, 186, 115, 0.12);
+}
+.hud-special-card__top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hud-special-card__name {
+  font-family: var(--font-engraved), serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--hud-ivory);
+}
+.hud-special-card__desc {
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.38;
+  color: #b7aa95;
+}
+.hud-special-card__payouts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(181, 133, 56, 0.2);
+}
+.hud-special-card__pay-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(181, 133, 56, 0.24);
+}
+.hud-special-card__pay-cnt {
+  font-family: var(--font-engraved), serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #a6957a;
+}
+.hud-special-card__pay-val {
+  margin-top: 1px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #4de2d1;
+}
+
+.hud-scatter-tier {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(181, 133, 56, 0.2);
+}
+
+/* Symbol Medallion Mount */
+.hud-symbol-medallion {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 82px;
+  height: 82px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(214, 166, 80, 0.18), rgba(8, 12, 16, 0.92) 72%);
+  border: 1px solid rgba(181, 133, 56, 0.36);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+.hud-symbol-medallion--lg {
+  width: 88px;
+  height: 88px;
+}
+.hud-symbol-medallion--sm {
+  width: 64px;
+  height: 64px;
+  border-radius: 11px;
+}
+
+/* High & Low Symbol Payout Cards */
+.hud-symbol-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 11px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #15100b 0%, #0d0a07 100%);
+  border: 1px solid rgba(181, 133, 56, 0.32);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(223, 186, 115, 0.1);
+}
+.hud-symbol-card--high {
+  border-color: rgba(205, 152, 68, 0.42);
+}
+.hud-symbol-card__name {
+  margin-top: 8px;
+  font-family: var(--font-engraved), serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: var(--hud-ivory);
+  text-align: center;
+}
+.hud-symbol-card__table {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(181, 133, 56, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hud-symbol-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.hud-symbol-card__row:first-child {
+  background: rgba(181, 133, 56, 0.14);
+}
+.hud-symbol-card__cnt {
+  font-family: var(--font-engraved), serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #a89678;
+}
+.hud-symbol-card__val {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--hud-ivory);
+}
+.hud-symbol-card__row:first-child .hud-symbol-card__val {
+  font-size: 15.5px;
+  color: var(--hud-gold-text);
+}
+
+/* Callout & Rules Boxes */
+.hud-callout {
+  padding: 12px 15px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(22, 15, 9, 0.9) 0%, rgba(13, 9, 6, 0.95) 100%);
+  border: 1px solid rgba(181, 133, 56, 0.32);
+}
+.hud-callout__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--hud-gold-text);
+  text-transform: uppercase;
+}
+.hud-callout__body {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.48;
+  color: #cbbca0;
+}
+
+/* Mode Cards */
+.hud-mode-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #16100b 0%, #0e0a07 100%);
+  border: 1px solid rgba(181, 133, 56, 0.34);
+}
+@media (min-width: 640px) {
+  .hud-mode-card {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+.hud-mode-card__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--hud-gold-text);
+}
+.hud-mode-card__desc {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #b7aa95;
+}
+.hud-mode-card__stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.hud-mode-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 78px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(181, 133, 56, 0.22);
+}
+.hud-mode-card__stat-label {
+  font-family: var(--font-engraved), serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #9e8f77;
+}
+.hud-mode-card__stat-val {
+  margin-top: 1px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.hud-prob-box {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(181, 133, 56, 0.24);
+}
+.hud-prob-box__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.hud-prob-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(181, 133, 56, 0.15);
+  color: #d6c8b0;
+}
+.hud-prob-row:last-child {
+  border-bottom: 0;
+}
+
+/* Bonus Tier Cards & Payline Diagrams */
+.hud-bonus-tier-card {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(181, 133, 56, 0.24);
+}
+
+.hud-payline-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 8px 9px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #140f0a 0%, #0c0906 100%);
+  border: 1px solid rgba(181, 133, 56, 0.28);
+}
+.hud-payline-card__head {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+.hud-payline-card__num {
+  font-family: var(--font-engraved), serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--hud-gold-text);
+}
+.hud-payline-svg {
+  width: 100%;
+  max-width: 116px;
+  height: auto;
+  display: block;
+}
+
+/* Control Guide Cards */
+.hud-control-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #140f0a 0%, #0d0906 100%);
+  border: 1px solid rgba(181, 133, 56, 0.25);
+}
+.hud-control-card__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--hud-gold-text);
+}
+.hud-control-card__desc {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #b7aa95;
+}
+
+/* Mobile & Short Screen Modal Adjustments */
+@media (max-width: 540px) {
+  .hud-autoplay__header,
+  .hud-paytable__header {
+    padding: 12px 14px 10px;
+  }
+  .hud-segmented {
+    margin: 10px 14px 0;
+  }
+  .hud-autoplay__body {
+    padding: 12px 14px;
+    gap: 11px;
+  }
+  .hud-autoplay__footer {
+    padding: 0 14px 14px;
+  }
+  .hud-spin-chips {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hud-spin-chip {
+    min-height: 48px;
+  }
+  .hud-paytable__tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 6px 12px;
+    gap: 5px;
+  }
+  .hud-paytable__tab {
+    padding: 7px 6px;
+    font-size: 10px;
+  }
+  .hud-paytable__body {
+    padding: 12px;
+  }
+  .hud-special-card__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-height: 500px) {
+  .hud-autoplay,
+  .hud-paytable {
+    max-height: calc(100dvh - 10px);
+  }
+  .hud-autoplay__header,
+  .hud-paytable__header {
+    padding: 8px 14px;
+  }
+  .hud-title {
+    font-size: 18px;
+  }
+  .hud-kicker {
+    display: none;
+  }
+  .hud-autoplay__body,
+  .hud-paytable__body {
+    padding: 8px 14px;
+    gap: 8px;
+  }
+  .hud-spin-chip {
+    min-height: 40px;
+    padding: 4px;
+  }
+  .hud-spin-chip__num {
+    font-size: 13px;
+  }
+  .hud-autoplay__footer {
+    padding: 0 14px 10px;
+  }
+  .hud-primary-cta {
+    padding: 8px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html #game-surface .console-spin__ripple,
+  html #game-surface .console-spin,
+  html #game-surface .console-stepper,
+  html #game-surface .console-icon-button,
+  html #game-surface .console-autobtn {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -19,79 +19,83 @@ export default function MultiplierBanner({
   rollId = 0,
   rollCue = null,
 }: MultiplierBannerProps) {
-  // If in base game and multiplier is 1x, we can show subtle 1x or feature surge
   const isSurge = multiplier > 1;
   const formattedMultiplier = new Intl.NumberFormat('en-US', {
     maximumSignificantDigits: 5,
   }).format(multiplier);
 
   return (
-    <div className="game-multiplier-banner relative aspect-[1774/887] select-none flex items-center justify-center drop-shadow-[0_8px_25px_rgba(0,0,0,0.85)]">
-      {/* Background Pirate Skull & Scimitars Component Frame */}
+    <div
+      className={`game-multiplier-banner relative aspect-[1304/500] select-none flex items-center justify-center ${
+        isSurge ? 'game-multiplier-banner--surge' : ''
+      } ${isBonusActive ? 'game-multiplier-banner--bonus' : ''}`}
+    >
+      {/* Bespoke Pirate Cannons, Flintlocks & Gold Filigree Plaque Asset */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
-          src="/assets/aistudio/image_5a86e7dd.webp"
-          alt="Multiplier Frame"
+          src="/assets/sea-raider/ui/multiplier-banner-frame.png"
+          alt="Game Multiplier Frame"
           fill
           priority
-          sizes="256px"
-          className={`object-contain transition-all duration-300 ${
-            isSurge ? 'filter drop-shadow-[0_0_15px_rgba(245,158,11,0.8)]' : ''
-          }`}
+          unoptimized
+          sizes="340px"
+          className="object-contain"
         />
       </div>
 
-      {/* Central Plaque Content */}
-      <div className="relative z-10 w-[66%] h-[60%] mt-[4%] flex flex-col items-center justify-center overflow-hidden text-center">
-        {/* Subtle Label */}
-        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-amber-200/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+      {/* Central Carved Mahogany Plaque Content (strictly bounded within the 25.5%..74.5% x 29.5%..70.5% wooden recess) */}
+      <div className="game-multiplier-banner__inner absolute left-[25.5%] right-[25.5%] top-[29.5%] bottom-[29.5%] z-10 flex flex-col items-center justify-center overflow-hidden text-center">
+        {/* Crisp Engraved Label */}
+        <span className="game-multiplier-banner__label">
           {label}
         </span>
 
-        {/* Each saved bonus value rolls into the plaque, including a HOLD. */}
+        {/* Mechanical Drum Roll Value (No blurry text filters) */}
         <AnimatePresence mode="popLayout">
           <motion.div
             key={`${isBonusActive ? rollId : 0}-${multiplier}`}
-            initial={{ y: '-115%', opacity: 0.15, filter: 'blur(4px)', rotateX: 32 }}
-            animate={{ y: '0%', opacity: 1, filter: 'blur(0px)', rotateX: 0 }}
-            exit={{ y: '115%', opacity: 0, filter: 'blur(4px)', rotateX: -24 }}
-            transition={{ duration: 0.64, ease: [0.18, 0.78, 0.22, 1] }}
-            className="relative flex h-7 items-baseline justify-center sm:h-9"
+            initial={{ y: '-90%', opacity: 0 }}
+            animate={{
+              y: '0%',
+              opacity: 1,
+              scale: rollCue === 'rise' ? [0.92, 1.14, 1] : 1,
+            }}
+            exit={{ y: '90%', opacity: 0 }}
+            transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+            className="game-multiplier-banner__value-wrap relative flex items-center justify-center"
             title={`${multiplier}×`}
             aria-label={`${isBonusActive ? 'Bonus multiplier' : 'Game multiplier'} ${multiplier} times`}
           >
             <span
-              className={`text-base sm:text-xl md:text-2xl font-black tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] ${
-                isSurge
-                  ? 'bg-gradient-to-b from-yellow-200 via-amber-300 to-amber-600 bg-clip-text text-transparent filter drop-shadow-[0_0_8px_rgba(251,191,36,0.9)]'
-                  : 'text-amber-100'
+              className={`game-multiplier-banner__value tabular-nums ${
+                isSurge ? 'is-surge' : ''
               }`}
             >
-              {formattedMultiplier}X
+              {formattedMultiplier}×
             </span>
           </motion.div>
         </AnimatePresence>
-        <AnimatePresence mode="wait">
-          {isBonusActive && rollCue && (
-            <motion.span
-              key={`${rollId}-${rollCue}`}
-              initial={{ opacity: 0, y: -4, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 4, scale: 0.96 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className={`mt-0.5 rounded-full border px-1.5 py-[1px] text-[6px] font-black leading-none tracking-[.16em] sm:text-[7px] ${
-                rollCue === 'rise'
-                  ? 'border-emerald-300/60 bg-emerald-950/80 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,.4)]'
-                  : rollCue === 'hold'
-                    ? 'border-amber-100/35 bg-black/65 text-amber-100/75'
-                    : 'border-cyan-200/45 bg-cyan-950/70 text-cyan-100'
-              }`}
-            >
-              {rollCue === 'rise' ? '↑ RISE' : rollCue === 'hold' ? '— HOLD' : 'BONUS START'}
-            </motion.span>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* Bonus Roll Status Micro-Plate — pinned on the lower brass rim only when active */}
+      <AnimatePresence mode="wait">
+        {isBonusActive && rollCue && (
+          <motion.span
+            key={`${rollId}-${rollCue}`}
+            initial={{ opacity: 0, y: -3 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 3 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className={`game-multiplier-banner__cue game-multiplier-banner__cue--${rollCue} absolute bottom-[12%] left-1/2 -translate-x-1/2 z-20`}
+          >
+            {rollCue === 'rise'
+              ? '▲ RISING'
+              : rollCue === 'hold'
+              ? '◆ LOCKED'
+              : '★ START'}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

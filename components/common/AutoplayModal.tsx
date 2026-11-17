@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Anchor, Compass, Gauge, Sailboat, X } from 'lucide-react';
+import { Compass, Gauge, Play, Repeat, ShieldAlert, Sparkles, Trophy, X } from 'lucide-react';
 import { BonusType, MODE_CONFIGS, PlayMode } from '../../lib/slot-engine';
 import { formatMoney, toSocialText } from '../../lib/currency';
 
@@ -29,27 +29,57 @@ const BONUS_CHOICES: { key: BonusType; label: string; scatters: number }[] = [
   { key: 'legend', label: 'Legend', scatters: 5 },
   { key: 'ethereal', label: 'Ethereal', scatters: 6 },
 ];
-const SPIN_COUNTS = [10, 25, 50, 100, 250, 500];
+
+type SpinCountOption = 10 | 25 | 50 | 100 | 250 | 'infinite';
+const SPIN_COUNT_OPTIONS: { value: SpinCountOption; label: string; sub: string }[] = [
+  { value: 10, label: '10', sub: 'SPINS' },
+  { value: 25, label: '25', sub: 'SPINS' },
+  { value: 50, label: '50', sub: 'SPINS' },
+  { value: 100, label: '100', sub: 'SPINS' },
+  { value: 250, label: '250', sub: 'SPINS' },
+  { value: 'infinite', label: '∞', sub: 'UNTIL STOP' },
+];
 
 export default function AutoplayModal({
-  isOpen, onClose, onStartAuto, onStartSimulation, isSocial, activeMode, baseBet, balance, currency, canStartSimulation, isDemo,
+  isOpen,
+  onClose,
+  onStartAuto,
+  onStartSimulation,
+  isSocial,
+  activeMode,
+  baseBet,
+  balance,
+  currency,
+  canStartSimulation,
+  isDemo,
 }: AutoplayModalProps) {
   const [tab, setTab] = useState<'auto' | 'simulate'>('auto');
-  const [selectedSpins, setSelectedSpins] = useState(50);
+  const [selectedOption, setSelectedOption] = useState<SpinCountOption>(50);
   const [stopOnWin, setStopOnWin] = useState(false);
-  const [stopOnFeature, setStopOnFeature] = useState(false);
+  const [stopOnFeature, setStopOnFeature] = useState(true);
+  const [stopOnLossGuard, setStopOnLossGuard] = useState(true);
   const [speed, setSpeed] = useState<SpinSpeed>(1);
   const [stopBonuses, setStopBonuses] = useState<BonusType[]>([]);
 
   const spinCost = baseBet * MODE_CONFIGS[activeMode].costMultiplier;
-  const maxOutlay = spinCost * selectedSpins;
+  const resolvedSpins =
+    selectedOption === 'infinite'
+      ? tab === 'auto'
+        ? Number.POSITIVE_INFINITY
+        : 500
+      : selectedOption;
+  const isInfinite = selectedOption === 'infinite' && tab === 'auto';
+  const maxOutlay = isInfinite ? balance : spinCost * resolvedSpins;
   const canAffordOneSpin = balance >= spinCost;
   const startDisabled = tab === 'auto' ? !canAffordOneSpin : !canStartSimulation || !canAffordOneSpin;
 
   const start = () => {
     if (startDisabled) return;
-    if (tab === 'auto') onStartAuto({ spins: selectedSpins, stopOnWin, stopOnFeature });
-    else onStartSimulation({ spins: selectedSpins, stopOnBonuses: stopBonuses, speed });
+    if (tab === 'auto') {
+      onStartAuto({ spins: resolvedSpins, stopOnWin, stopOnFeature });
+    } else {
+      onStartSimulation({ spins: resolvedSpins, stopOnBonuses: stopBonuses, speed });
+    }
     onClose();
   };
 
@@ -57,127 +87,261 @@ export default function AutoplayModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          key="voyage"
-          className="ship-overlay fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+          key="autoplay-modal-backdrop"
+          className="hud-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 select-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: 0.16 }}
           onClick={onClose}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="voyage-title"
+          aria-labelledby="autoplay-modal-title"
         >
           <motion.div
-            className="voyage"
-            initial={{ y: 40, scale: 0.94, opacity: 0 }}
+            className="hud-cabinet hud-autoplay"
+            initial={{ y: 24, scale: 0.96, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
-            exit={{ y: 30, scale: 0.95, opacity: 0, transition: { duration: 0.16 } }}
-            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            exit={{ y: 18, scale: 0.97, opacity: 0, transition: { duration: 0.14 } }}
+            transition={{ type: 'spring', stiffness: 440, damping: 34 }}
             onClick={(event) => event.stopPropagation()}
           >
-            <span className="voyage__corner voyage__corner--tl" aria-hidden="true" />
-            <span className="voyage__corner voyage__corner--tr" aria-hidden="true" />
-            <span className="voyage__corner voyage__corner--bl" aria-hidden="true" />
-            <span className="voyage__corner voyage__corner--br" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--tl" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--tr" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--bl" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--br" aria-hidden="true" />
 
-            <header className="voyage__header">
-              <div className="voyage__helm" aria-hidden="true">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/sea-raider/scene/helm-wheel.png" alt="" draggable={false} />
+            {/* Header */}
+            <header className="hud-autoplay__header">
+              <div className="hud-autoplay__badge" aria-hidden="true">
+                <Repeat size={18} strokeWidth={2.4} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="voyage__kicker">{toSocialText('Chart your course', isSocial)}</p>
-                <h2 id="voyage-title" className="voyage__title">{toSocialText('Autoplay Voyage', isSocial)}</h2>
+                <p className="hud-kicker">{toSocialText('AUTOMATED HELM CONTROL', isSocial)}</p>
+                <h2 id="autoplay-modal-title" className="hud-title">
+                  {toSocialText('Autoplay Settings', isSocial)}
+                </h2>
               </div>
-              <button onClick={onClose} aria-label="Close" className="ship-seal-close"><X size={18} strokeWidth={3} /></button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close autoplay settings"
+                className="hud-close-btn"
+              >
+                <X size={17} strokeWidth={2.6} />
+              </button>
             </header>
 
-            <div className="voyage__tabs" role="tablist">
-              {(['auto', 'simulate'] as const).map((key) => (
-                <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)} className={`voyage__tab ${tab === key ? 'is-active' : ''}`}>
-                  {tab === key && <motion.span layoutId="voyage-tab" className="voyage__tab-glow" transition={{ type: 'spring', stiffness: 500, damping: 36 }} />}
-                  <span className="relative z-10 flex items-center justify-center gap-1.5">
-                    {key === 'auto' ? <Sailboat size={14} /> : <Compass size={14} />}
-                    {key === 'auto' ? 'Autoplay' : 'Voyage Simulator'}
-                  </span>
-                </button>
-              ))}
+            {/* Mode Switcher */}
+            <div className="hud-segmented" role="tablist">
+              {(['auto', 'simulate'] as const).map((key) => {
+                const active = tab === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setTab(key)}
+                    className={`hud-segmented__btn ${active ? 'is-active' : ''}`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="autoplay-seg-pill"
+                        className="hud-segmented__pill"
+                        transition={{ type: 'spring', stiffness: 480, damping: 36 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      {key === 'auto' ? <Repeat size={13} /> : <Compass size={13} />}
+                      {key === 'auto' ? 'Autoplay' : 'Voyage Simulator'}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="voyage__body">
+            {/* Body */}
+            <div className="hud-autoplay__body custom-scrollbar">
+              {/* Spin Count Chips */}
               <section>
-                <h3 className="voyage__label">Number of spins</h3>
-                <div className="voyage__coins">
-                  {SPIN_COUNTS.map((count) => (
-                    <motion.button
-                      key={count}
-                      onClick={() => setSelectedSpins(count)}
-                      whileTap={{ scale: 0.9 }}
-                      className={`voyage__coin ${selectedSpins === count ? 'is-active' : ''}`}
-                      aria-pressed={selectedSpins === count}
-                    >
-                      <span className="tabular-nums">{count}</span>
-                    </motion.button>
-                  ))}
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="hud-section-label">NUMBER OF SPINS</h3>
+                  <span className="text-[10px] font-bold tracking-wider text-[#9db4b8] tabular-nums">
+                    {isInfinite ? 'CONTINUOUS RUN' : `${resolvedSpins} SPINS SELECTED`}
+                  </span>
+                </div>
+                <div className="hud-spin-chips">
+                  {SPIN_COUNT_OPTIONS.map((opt) => {
+                    const active = selectedOption === opt.value;
+                    const displayLabel =
+                      opt.value === 'infinite' && tab === 'simulate' ? '500' : opt.label;
+                    const displaySub =
+                      opt.value === 'infinite' && tab === 'simulate' ? 'MAX SIM' : opt.sub;
+                    return (
+                      <button
+                        key={String(opt.value)}
+                        type="button"
+                        onClick={() => setSelectedOption(opt.value)}
+                        aria-pressed={active}
+                        className={`hud-spin-chip ${active ? 'is-active' : ''}`}
+                      >
+                        <span className="hud-spin-chip__num tabular-nums">{displayLabel}</span>
+                        <span className="hud-spin-chip__sub">{displaySub}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
 
+              {/* Stop Conditions / Simulator Options */}
               <AnimatePresence mode="wait" initial={false}>
                 {tab === 'auto' ? (
-                  <motion.section key="auto" className="voyage__panel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.16 }}>
-                    <h3 className="voyage__label"><Anchor size={12} /> Drop anchor when</h3>
-                    <Lever label="Any win lands" checked={stopOnWin} onChange={setStopOnWin} />
-                    <Lever label={toSocialText('A bonus feature triggers', isSocial)} checked={stopOnFeature} onChange={setStopOnFeature} />
-                    <p className="voyage__note">Each spin uses the current mode and balance. Speed follows the Turbo button.</p>
+                  <motion.section
+                    key="auto-panel"
+                    className="hud-inset-panel"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.14 }}
+                  >
+                    <h3 className="hud-section-label mb-2">STOP CONDITIONS</h3>
+                    <div className="flex flex-col divide-y divide-[#b58538]/15">
+                      <ToggleRow
+                        icon={<Sparkles size={14} className="text-[#4de2d1]" />}
+                        title={toSocialText('Stop on Bonus Feature', isSocial)}
+                        subtitle="Halt autoplay when 3+ Scatters trigger Free Spins"
+                        checked={stopOnFeature}
+                        onChange={setStopOnFeature}
+                      />
+                      <ToggleRow
+                        icon={<Trophy size={14} className="text-[#f2c464]" />}
+                        title={toSocialText('Stop on Single Win', isSocial)}
+                        subtitle="Halt autoplay immediately when any winning spin lands"
+                        checked={stopOnWin}
+                        onChange={setStopOnWin}
+                      />
+                      <ToggleRow
+                        icon={<ShieldAlert size={14} className="text-[#e08b6b]" />}
+                        title="Stop on Insufficient Balance"
+                        subtitle="Automatically stops if balance cannot cover the active spin cost"
+                        checked={stopOnLossGuard}
+                        onChange={setStopOnLossGuard}
+                      />
+                    </div>
                   </motion.section>
                 ) : (
-                  <motion.section key="sim" className="voyage__panel" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.16 }}>
-                    <h3 className="voyage__label"><Gauge size={12} /> Sailing speed</h3>
-                    <div className="voyage__speeds">
-                      {SPEEDS.map((value) => (
-                        <button key={value} onClick={() => setSpeed(value)} className={`voyage__speed ${speed === value ? 'is-active' : ''}`} aria-pressed={speed === value}>{value}×</button>
-                      ))}
+                  <motion.section
+                    key="sim-panel"
+                    className="hud-inset-panel space-y-3"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.14 }}
+                  >
+                    <div>
+                      <h3 className="hud-section-label mb-2">
+                        <Gauge size={12} /> SIMULATION SPEED
+                      </h3>
+                      <div className="grid grid-cols-4 gap-2">
+                        {SPEEDS.map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setSpeed(value)}
+                            aria-pressed={speed === value}
+                            className={`hud-speed-chip tabular-nums ${speed === value ? 'is-active' : ''}`}
+                          >
+                            {value}×
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <h3 className="voyage__label mt-3"><Anchor size={12} /> Heave to on these bonuses</h3>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                      {BONUS_CHOICES.map(({ key, label, scatters }) => (
-                        <Lever key={key} label={<><b className="tabular-nums">{scatters}</b> scatters · {label}</>} checked={stopBonuses.includes(key)} onChange={(checked) => setStopBonuses((old) => checked ? [...old, key] : old.filter((item) => item !== key))} />
-                      ))}
+
+                    <div>
+                      <h3 className="hud-section-label mb-1.5">PAUSE ON BONUS TIERS</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 divide-y sm:divide-y-0 divide-[#b58538]/15">
+                        {BONUS_CHOICES.map(({ key, label, scatters }) => (
+                          <ToggleRow
+                            key={key}
+                            compact
+                            title={
+                              <span>
+                                <strong className="text-[#f2c464] tabular-nums">{scatters} Scatters</strong> · {label}
+                              </span>
+                            }
+                            checked={stopBonuses.includes(key)}
+                            onChange={(checked) =>
+                              setStopBonuses((old) =>
+                                checked ? [...old, key] : old.filter((item) => item !== key)
+                              )
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[11px] leading-snug text-[#9eb0b5]">
+                        Each spin is a real RGS play and debits this {isDemo ? 'demo' : 'live'} session. Pauses on selected bonuses.
+                      </p>
                     </div>
-                    <p className="voyage__note">Each spin is a real RGS play and debits this {isDemo ? 'demo' : 'live'} session. The run pauses on a selected bonus and stops if the balance can&apos;t cover the next spin.</p>
                   </motion.section>
                 )}
               </AnimatePresence>
 
-              <div className="voyage__ledger">
-                <div>
-                  <span>{MODE_CONFIGS[activeMode].name}</span>
-                  <b className="tabular-nums">{formatMoney(spinCost, currency)} <small>/ spin</small></b>
+              {/* Dark Wood & Brass Summary Ledger (Parchment-Free) */}
+              <div className="hud-summary-strip">
+                <div className="hud-summary-strip__cell">
+                  <span className="hud-summary-strip__label">ACTIVE MODE</span>
+                  <strong className="hud-summary-strip__value text-[#f4ead5]">
+                    {toSocialText(MODE_CONFIGS[activeMode].name, isSocial)}
+                  </strong>
                 </div>
-                <div>
-                  <span>{tab === 'auto' ? 'Up to' : 'Max session spend'}</span>
-                  <b className="voyage__ledger-total tabular-nums">{formatMoney(maxOutlay, currency)}</b>
+                <div className="hud-summary-strip__cell">
+                  <span className="hud-summary-strip__label">{toSocialText('COST / SPIN', isSocial)}</span>
+                  <strong className="hud-summary-strip__value text-[#f2c464] tabular-nums">
+                    {formatMoney(spinCost, currency)}
+                  </strong>
+                </div>
+                <div className="hud-summary-strip__cell text-right">
+                  <span className="hud-summary-strip__label">
+                    {isInfinite ? 'SESSION LIMIT' : 'MAX OUTLAY'}
+                  </span>
+                  <strong className="hud-summary-strip__value text-[#56dcd4] tabular-nums">
+                    {isInfinite ? 'Until Stopped' : formatMoney(maxOutlay, currency)}
+                  </strong>
                 </div>
               </div>
             </div>
 
-            <footer className="voyage__footer">
+            {/* Footer & Start Button */}
+            <footer className="hud-autoplay__footer">
               {tab === 'simulate' && !canStartSimulation && (
-                <p className="voyage__warning">{toSocialText('This preview has no authenticated RGS wallet. Open Sea Raider through Engine Play Game to connect a demo or live session.', isSocial)}</p>
+                <p className="hud-warning-banner">
+                  {toSocialText(
+                    'This preview has no authenticated RGS wallet. Open Sea Raider through Engine Play Game to connect a demo or live session.',
+                    isSocial
+                  )}
+                </p>
               )}
-              {!canAffordOneSpin && <p className="voyage__warning">Your balance can&apos;t cover one spin at this amount.</p>}
-              <motion.button
+              {!canAffordOneSpin && (
+                <p className="hud-warning-banner">
+                  Your balance cannot cover one spin at {formatMoney(spinCost, currency)}.
+                </p>
+              )}
+
+              <button
+                type="button"
                 onClick={start}
                 disabled={startDisabled}
-                whileHover={startDisabled ? undefined : { y: -2 }}
-                whileTap={startDisabled ? undefined : { scale: 0.97 }}
-                className="voyage__start"
+                className="hud-primary-cta"
               >
-                <span className="voyage__start-wave" aria-hidden="true" />
-                <span className="relative z-10">{tab === 'auto' ? 'Set sail' : 'Start voyage'}</span>
-                <span className="voyage__start-count relative z-10 tabular-nums">{selectedSpins} spins</span>
-              </motion.button>
+                <span className="flex items-center gap-2">
+                  <Play size={16} fill="currentColor" />
+                  <span>{tab === 'auto' ? 'START AUTOPLAY' : 'START VOYAGE'}</span>
+                </span>
+                <span className="hud-primary-cta__badge tabular-nums">
+                  {isInfinite ? '∞ SPINS' : `${resolvedSpins} SPINS`}
+                </span>
+              </button>
             </footer>
           </motion.div>
         </motion.div>
@@ -186,12 +350,39 @@ export default function AutoplayModal({
   );
 }
 
-function Lever({ label, checked, onChange }: { label: React.ReactNode; checked: boolean; onChange: (checked: boolean) => void }) {
+function ToggleRow({
+  icon,
+  title,
+  subtitle,
+  checked,
+  onChange,
+  compact = false,
+}: {
+  icon?: React.ReactNode;
+  title: React.ReactNode;
+  subtitle?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  compact?: boolean;
+}) {
   return (
-    <label className={`voyage__lever ${checked ? 'is-on' : ''}`}>
-      <span className="min-w-0">{label}</span>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only" />
-      <span className="voyage__switch" aria-hidden="true"><span className="voyage__knob" /></span>
+    <label className={`hud-toggle-row ${compact ? 'hud-toggle-row--compact' : ''} ${checked ? 'is-on' : ''}`}>
+      <div className="flex min-w-0 items-center gap-2.5">
+        {icon && <span className="shrink-0">{icon}</span>}
+        <div className="min-w-0">
+          <div className="hud-toggle-row__title">{title}</div>
+          {subtitle && <div className="hud-toggle-row__sub">{subtitle}</div>}
+        </div>
+      </div>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only"
+      />
+      <span className="hud-switch" aria-hidden="true">
+        <span className="hud-switch__thumb" />
+      </span>
     </label>
   );
 }

@@ -1,21 +1,35 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import { Application, Assets, Sprite, Container, Texture } from 'pixi.js';
+import { Square } from 'lucide-react';
+import { toSocialText } from '../../lib/currency';
 
-interface PixiSpinButtonProps {
+export interface PixiSpinButtonProps {
   onSpin: () => void;
   isSpinning: boolean;
   disabled?: boolean;
   isBonusActive?: boolean;
   bonusSpinsRemaining?: number;
   bonusTotalSpins?: number;
+  bonusFinale?: boolean;
+  isAutoActive?: boolean;
+  isTurbo?: boolean;
+  isReady?: boolean;
   isSocial?: boolean;
   className?: string;
   assetSrc?: string;
+  spinLabel?: string;
+  ariaLabel?: string;
 }
 
+/**
+ * Self-contained ship's-helm wheel Spin Button for the universal bet bar.
+ * - Idle state: subtle helmsman sway with matte brass bezel and sea-glass teal medallion.
+ * - Press state: tactile anticipation squash and spring release.
+ * - Spinning state: continuous wheel rotation with smooth angular acceleration/deceleration
+ *   and a crisp stop-state emblem inside the medallion.
+ * - Bonus state: displays BONUS / SURGE and remaining spin counter.
+ */
 export default function PixiSpinButton({
   onSpin,
   isSpinning,
@@ -23,236 +37,139 @@ export default function PixiSpinButton({
   isBonusActive = false,
   bonusSpinsRemaining = 0,
   bonusTotalSpins = 0,
+  bonusFinale = false,
+  isAutoActive = false,
+  isTurbo = false,
+  isReady,
+  isSocial = false,
   className = '',
-  assetSrc = '/assets/aistudio/image_b5e5b74e.webp',
+  assetSrc = '/assets/sea-raider/scene/helm-wheel.png',
+  spinLabel,
+  ariaLabel,
 }: PixiSpinButtonProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<Application | null>(null);
-  const [isPixiReady, setIsPixiReady] = useState(false);
-  const isSpinningRef = useRef(isSpinning);
-  const disabledRef = useRef(disabled);
-  const isBonusActiveRef = useRef(isBonusActive);
-  const onSpinRef = useRef(onSpin);
-
-  // Sync refs
-  useEffect(() => {
-    isSpinningRef.current = isSpinning;
-    disabledRef.current = disabled;
-    isBonusActiveRef.current = isBonusActive;
-    onSpinRef.current = onSpin;
-  }, [isSpinning, disabled, isBonusActive, onSpin]);
+  const wheelRef = useRef<HTMLImageElement>(null);
+  const [isPressed, setIsPressed] = useState(false);
+  const wheelSpinning = isSpinning || isAutoActive;
+  const readyState = isReady ?? (!disabled && !isSpinning && !isAutoActive && !isBonusActive);
+  const stateRef = useRef({ spinning: wheelSpinning, turbo: isTurbo, pressed: isPressed });
 
   useEffect(() => {
-    let isMounted = true;
-    const domElement = containerRef.current;
-    if (!domElement) return;
+    stateRef.current = { spinning: wheelSpinning, turbo: isTurbo, pressed: isPressed };
+  }, [wheelSpinning, isTurbo, isPressed]);
 
-    const baseSize = 140; // High resolution virtual canvas size
-    const app = new Application();
-
-    async function setupPixi() {
-      try {
-        await app.init({
-          width: baseSize,
-          height: baseSize,
-          backgroundAlpha: 0,
-          resolution: Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 2 : 2, 2.5),
-          autoDensity: true,
-          antialias: true,
-          preference: 'webgl',
-        });
-
-        if (!isMounted || !domElement) {
-          app.destroy(true);
-          return;
-        }
-
-        appRef.current = app;
-        app.canvas.style.width = '100%';
-        app.canvas.style.height = '100%';
-        app.canvas.style.display = 'block';
-        domElement.appendChild(app.canvas);
-
-        // Load golden circular spinner texture
-        let texture: Texture;
-        try {
-          texture = await Assets.load(assetSrc);
-        } catch {
-          // If Assets.load fails, create from Image element
-          texture = await Texture.from(assetSrc);
-        }
-
-        if (!isMounted) return;
-
-        const stage = app.stage;
-        const center = baseSize / 2;
-
-        // Container for all spinner elements centered
-        const rootContainer = new Container();
-        rootContainer.x = center;
-        rootContainer.y = center;
-        stage.addChild(rootContainer);
-
-        // Use the supplied spinner artwork as the complete button surface.
-        const spinnerSprite = new Sprite(texture);
-        spinnerSprite.anchor.set(0.5);
-        const targetDiameter = baseSize;
-        const scale = targetDiameter / Math.max(texture.width, texture.height);
-        spinnerSprite.scale.set(scale);
-        rootContainer.addChild(spinnerSprite);
-
-        // Interaction state
-        let isHovered = false;
-        let isPressed = false;
-        let currentAngle = 0;
-        let spinSpeed = 0;
-        let breathTime = 0;
-
-        // Interactive pointer handlers
-        rootContainer.eventMode = 'static';
-        rootContainer.cursor = 'pointer';
-
-        rootContainer.on('pointerover', () => {
-          isHovered = true;
-        });
-
-        rootContainer.on('pointerout', () => {
-          isHovered = false;
-          isPressed = false;
-        });
-
-        rootContainer.on('pointerdown', () => {
-          if (!disabledRef.current && !isSpinningRef.current && !isBonusActiveRef.current) {
-            isPressed = true;
-          }
-        });
-
-        rootContainer.on('pointerup', () => {
-          if (isPressed) {
-            isPressed = false;
-            if (!disabledRef.current && !isSpinningRef.current && !isBonusActiveRef.current) {
-              onSpinRef.current();
-            }
-          }
-        });
-
-        // Animation loop ticker
-        app.ticker.add((ticker) => {
-          breathTime += ticker.deltaTime * 0.05;
-
-          // Target scale logic
-          let targetScale = 1.0;
-          if (disabledRef.current) {
-            targetScale = 0.95;
-            rootContainer.alpha = 0.65;
-            rootContainer.cursor = 'not-allowed';
-          } else {
-            rootContainer.alpha = 1.0;
-            rootContainer.cursor = isBonusActiveRef.current ? 'default' : 'pointer';
-
-            if (isPressed) {
-              targetScale = 0.92;
-            } else if (isHovered && !isSpinningRef.current && !isBonusActiveRef.current) {
-              targetScale = 1.06;
-            } else if (!isSpinningRef.current) {
-              // Subtle breathing when idle
-              targetScale = 1.0 + Math.sin(breathTime) * 0.02;
-            }
-          }
-
-          // Smooth scale interpolation
-          rootContainer.scale.x += (targetScale - rootContainer.scale.x) * 0.18;
-          rootContainer.scale.y += (targetScale - rootContainer.scale.y) * 0.18;
-
-          // Rotation Physics
-          if (isSpinningRef.current) {
-            // High speed continuous spin acceleration
-            const targetSpeed = 0.32; // ~18 rad/sec
-            spinSpeed += (targetSpeed - spinSpeed) * 0.12;
-            currentAngle += spinSpeed * ticker.deltaTime;
-          } else {
-            // Elastic deceleration settling back smoothly
-            spinSpeed *= 0.88;
-            if (spinSpeed < 0.005) {
-              spinSpeed = 0;
-            }
-            currentAngle += spinSpeed * ticker.deltaTime;
-          }
-
-          spinnerSprite.rotation = currentAngle;
-
-        });
-
-        setIsPixiReady(true);
-      } catch (err) {
-        console.error('PixiJS Spin Button init failed, using fallback:', err);
-      }
+  useEffect(() => {
+    const el = wheelRef.current;
+    if (!el) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.style.transform = 'rotate(0deg)';
+      return;
     }
 
-    setupPixi();
+    let angle = 0;
+    let velocity = 0;
+    let last = performance.now();
+    const start = last;
+    let frame = 0;
+    const idleSwing = 5.5;
 
-    return () => {
-      isMounted = false;
-      if (appRef.current) {
-        try {
-          appRef.current.destroy(true, { children: true });
-        } catch {}
-        appRef.current = null;
+    const step = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const t = (now - start) / 1000;
+      const { spinning, turbo, pressed } = stateRef.current;
+
+      if (spinning) {
+        const targetVelocity = turbo ? 720 : 440;
+        velocity += (targetVelocity - velocity) * Math.min(1, dt * 4.2);
+      } else if (pressed) {
+        // Subtle anticipation wind-up when pressed down
+        const base = Math.round(angle / 360) * 360;
+        const target = base - 14;
+        velocity += (18 * (target - angle) - 6.5 * velocity) * dt;
+      } else {
+        const idle =
+          idleSwing * Math.sin(t * 0.52) +
+          idleSwing * 0.28 * Math.sin(t * 1.18 + 0.9);
+        const base = Math.round((angle - idle) / 360) * 360;
+        const target = base + idle;
+        // Lightly under-damped spring so the helm settles with natural weight
+        velocity += (8.5 * (target - angle) - 4.8 * velocity) * dt;
       }
+
+      angle += velocity * dt;
+      el.style.transform = `rotate(${angle.toFixed(2)}deg)`;
+      frame = requestAnimationFrame(step);
     };
-  }, [assetSrc]);
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const resolvedAriaLabel =
+    ariaLabel ||
+    (isBonusActive
+      ? bonusFinale
+        ? 'Wild Surge final spin in progress'
+        : `Bonus in progress, ${bonusSpinsRemaining} spins remaining`
+      : isSpinning
+      ? toSocialText('Spin in progress', isSocial)
+      : toSocialText('Spin', isSocial));
+
+  const resolvedSpinText = spinLabel ?? toSocialText('SPIN', isSocial);
 
   return (
-    <div
-      className={`relative flex items-center justify-center select-none ${className}`}
+    <button
+      type="button"
       onClick={() => {
-        if (!disabled && !isSpinning && !isBonusActive) {
-          onSpin();
-        }
+        if (!disabled) onSpin();
       }}
+      onPointerDown={() => {
+        if (!disabled) setIsPressed(true);
+      }}
+      onPointerUp={() => setIsPressed(false)}
+      onPointerLeave={() => setIsPressed(false)}
+      onPointerCancel={() => setIsPressed(false)}
+      disabled={disabled}
+      aria-label={resolvedAriaLabel}
+      className={`console-spin group relative flex shrink-0 flex-col items-center justify-center overflow-visible border-0 text-center ${
+        isBonusActive ? 'console-spin--bonus' : ''
+      } ${readyState ? 'console-spin--ready' : ''} ${
+        isSpinning ? 'console-spin--spinning' : ''
+      } ${isPressed ? 'console-spin--pressed' : ''} ${className}`}
     >
-      {/* PixiJS Canvas Container */}
-      <div
-        ref={containerRef}
-        className="spin-button-canvas aspect-square cursor-pointer drop-shadow-[0_0_20px_rgba(251,191,36,0.7)] hover:drop-shadow-[0_0_35px_rgba(245,158,11,1)] transition-all flex items-center justify-center"
-        aria-label="Spin"
-      />
-      {!isBonusActive && (
-        <span className="spin-button-label pointer-events-none absolute -bottom-1 left-1/2 z-20 -translate-x-1/2 rounded-full border border-amber-100/70 bg-[#0b1920]/95 px-3 py-0.5 text-[8px] font-black tracking-[.22em] text-amber-100 shadow-[0_2px_9px_rgba(0,0,0,.75)] sm:-bottom-0.5 sm:text-[9px]">
-          SPIN
+      <span className="console-spin__ripple" aria-hidden="true" />
+      <span className="console-spin__ripple console-spin__ripple--late" aria-hidden="true" />
+
+      <div className="helm-wheel console-spin__helm" style={{ transform: 'translate(-50%, -50%)' }} aria-hidden="true">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          ref={wheelRef}
+          src={assetSrc}
+          alt=""
+          draggable={false}
+          className="helm-wheel__img"
+        />
+      </div>
+
+      <span className="console-spin__medallion" aria-hidden="true" />
+
+      {isBonusActive ? (
+        <>
+          <span className="console-spin-label relative z-10">
+            {bonusFinale ? 'SURGE' : 'BONUS'}
+          </span>
+          <span className="console-spin-count relative z-10 tabular-nums">
+            {bonusFinale ? 'FINAL' : `${bonusSpinsRemaining}/${bonusTotalSpins}`}
+          </span>
+        </>
+      ) : isSpinning ? (
+        <span className="console-spin-stop relative z-10 flex flex-col items-center justify-center gap-0.5" aria-hidden="true">
+          <Square size={14} strokeWidth={2.2} fill="currentColor" className="console-spin-stop__icon" />
+          <span className="console-spin-stop__label">STOP</span>
         </span>
+      ) : (
+        <span className="console-spin-label relative z-10">{resolvedSpinText}</span>
       )}
-
-      {/* Fallback until PixiJS canvas initializes */}
-      {!isPixiReady && (
-        <button
-          onClick={isBonusActive ? undefined : onSpin}
-          disabled={disabled || isSpinning}
-          className="absolute inset-0 w-full h-full rounded-full overflow-hidden hover:scale-105 active:scale-95 transition-transform flex items-center justify-center cursor-pointer"
-        >
-          <div
-            className={`relative w-full h-full rounded-full overflow-hidden ${
-              isSpinning ? 'animate-spin' : ''
-            }`}
-          >
-            <Image
-            src={assetSrc}
-              alt="Spin"
-              fill
-              priority
-              sizes="(max-width: 500px) 76px, 112px"
-              className="object-contain rounded-full"
-            />
-          </div>
-        </button>
-      )}
-
-      {/* If Bonus is active: show Free Spins badge anchored cleanly right above the spinner */}
-      {isBonusActive && (
-        <div className="absolute -top-4 sm:-top-5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-600 via-orange-500 to-amber-700 border border-amber-200 text-white font-black text-[10px] sm:text-xs shadow-[0_0_15px_rgba(245,158,11,0.95)] tracking-widest whitespace-nowrap animate-pulse pointer-events-none z-30">
-          SPINS: {bonusSpinsRemaining} / {bonusTotalSpins}
-        </div>
-      )}
-    </div>
+    </button>
   );
 }

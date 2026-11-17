@@ -157,12 +157,12 @@ export const UNKNOWN_BONUS_MAX_WIN_MULTIPLIER = EXTREME_MAX_WIN_MULTIPLIER;
 export const MAX_WIN_TRIGGER_ODDS: Record<PlayMode, number> = {
   // Keep frontend simulations aligned with the published book jackpot rows.
   base: 1 / 285_714,
-  bonus_chance: 1 / 200_000,
-  super_bonus: 1 / 160_000,
-  pirates_chance: 1 / 90_000,
+  bonus_chance: 1 / 250_000,
+  super_bonus: 1 / 161_414,
+  pirates_chance: 1 / 90_713,
   feature_spin: 1 / 110_000,
   unknown_bonus: 1 / 5_000,
-  unknown_extreme: 1 / 63_749,
+  unknown_extreme: 1 / 5_000,
 };
 
 export const BONUS_OUTCOME_ODDS = {
@@ -220,7 +220,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     id: 'bonus_chance',
     name: 'Bonus Chance',
     costMultiplier: 5.0,
-    description: '10% feature trigger chance (about 1 in 10 plays). On a trigger: 3 Scatters 96%, 4 Scatters 3.5%, 5 Scatters 0.5%. Three-scatter rounds return at least 5x the buy cost.',
+    description: '10% feature trigger chance (1 in 10 plays). On a trigger: 3 Scatters 96% (18x–140x, avg ~28x), 4 Scatters 3.5% (200x–600x), 5 Scatters 0.5% (1,500x–25,000x).',
     rtp: 96.7,
     maxWin: '25,000x',
     category: 'enhancer',
@@ -260,7 +260,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     id: 'unknown_bonus',
     name: 'Unknown Bonus',
     costMultiplier: 250.0,
-    description: 'Guaranteed feature. Outcome: 3 Scatters 52%, 4 Scatters 36.9%, 5 Scatters 11%, Ethereal 6 Scatters 0.1%. Ethereal returns at least 8,000x the base bet.',
+    description: 'Guaranteed feature. Outcome: 3 Scatters 52%, 4 Scatters 36.9%, 5 Scatters 11% (1,500x–25,000x), Ethereal 6 Scatters 0.1% (8,000x–50,000x).',
     rtp: 96.7,
     maxWin: '50,000x (Ethereal only)',
     category: 'enhancer',
@@ -270,7 +270,7 @@ export const MODE_CONFIGS: Record<PlayMode, ModeConfig> = {
     id: 'unknown_extreme',
     name: 'Unknown Extreme',
     costMultiplier: 500.0,
-    description: '15% feature chance: 13% Hidden (5 Scatters at 750x–25,000x), 2% Ethereal (6 Scatters at 8,000x–50,000x); 85% no feature.',
+    description: '15% feature chance: 13% Hidden (5 Scatters at 1,000x–25,000x), 2% Ethereal (6 Scatters at 8,000x–50,000x); 85% no feature (0x).',
     rtp: 96.7,
     maxWin: '50,000x (Ethereal only)',
     category: 'enhancer',
@@ -505,32 +505,26 @@ export function playSpin(mode: PlayMode, baseBet: number = 1.0): SpinResult {
   if (mode === 'unknown_extreme') {
     const roll = Math.random();
     if (roll < BONUS_OUTCOME_ODDS.unknown_extreme.noBonus) {
-      // 85% No Bonus
-      const grid = generateRandomGrid();
-      // Ensure < 3 scatters
-      let scats = 0;
-      for (let c = 0; c < 5; c++) {
-        for (let r = 0; r < 3; r++) {
-          if (grid[c][r] === 'SCATTER') {
-            scats++;
-            if (scats >= 2) grid[c][r] = 'L5';
-          }
-        }
-      }
-      const evalRes = evaluateGrid(grid, wager, getModePayoutScale(mode));
-      const lineWin = Math.min(evalRes.totalLineWin, baseBet * 5.0); // Micro-payout or dead
+      // 85% No Bonus — strictly 0x payout
+      const grid: SymbolId[][] = [
+        ['L1', 'L2', 'L3'],
+        ['L4', 'L5', 'H4'],
+        ['L1', 'L3', 'H3'],
+        ['L2', 'L4', 'H2'],
+        ['L3', 'L5', 'H1'],
+      ];
       return {
         grid,
-        totalLineWin: lineWin,
-        lineHits: evalRes.lineHits,
-        scatterCount: scats < 2 ? scats : 1,
-        scatterPositions: evalRes.scatterPositions.slice(0, 1),
+        totalLineWin: 0,
+        lineHits: [],
+        scatterCount: 0,
+        scatterPositions: [],
         wildMultiplier: 1,
         bonusTriggered: false,
         bonusType: null,
         bonusSpinsAwarded: 0,
-        totalWin: lineWin,
-        payoutMultiplier: lineWin / wager,
+        totalWin: 0,
+        payoutMultiplier: 0,
         isMaxWin: false,
         mysteryOutcomeText: 'CURSE OF THE DEEP — NO BONUS AWARDED (0x)',
       };
@@ -840,11 +834,20 @@ export function playBonusFreeSpin(
     grid[2][Math.floor(Math.random() * 3)] = 'WILD';
     grid[3][Math.floor(Math.random() * 3)] = 'WILD';
   } else if (bonusType === 'ethereal') {
-    // Ethereal Cataclysm: Huge multipliers and screen-wide Wilds
+    // Ethereal Cataclysm: Huge multipliers and connecting Wilds (full Wild lines reserved for Wild Surge)
     multiplier = Math.min(currentMultiplier + 5, 100);
-    for (let c = 0; c < 5; c++) {
-      if (Math.random() < 0.6) {
+    for (let c = 1; c <= 3; c++) {
+      if (Math.random() < 0.65) {
         grid[c][Math.floor(Math.random() * 3)] = 'WILD';
+      }
+    }
+    if (Math.random() < 0.35) {
+      grid[4][Math.floor(Math.random() * 3)] = 'WILD';
+    }
+    // Prevent full 5-of-a-kind Wild lines on free spins so Wild Surge retains its climax
+    for (const line of PAYLINES) {
+      if (line.every(([c, r]) => grid[c][r] === 'WILD')) {
+        grid[0][line[0][1]] = 'H1';
       }
     }
   }

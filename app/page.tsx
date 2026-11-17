@@ -192,8 +192,35 @@ export default function SlotGamePage() {
   const bonusPayoutBigWinRef = useRef<boolean>(false);
   const bonusAnimationSpeedRef = useRef<SpinSpeed>(1);
   const skipBonusNowRef = useRef<boolean>(false);
+  const skipCurrentSpinRef = useRef<boolean>(false);
+  const spinSkipWakeRef = useRef<(() => void) | null>(null);
   const usingRgsRef = useRef<boolean>(false);
   const runNextFreeSpinRef = useRef<() => void>(() => {});
+
+  const waitOrSkip = useCallback((ms: number) => {
+    if (skipCurrentSpinRef.current || ms <= 0) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const timer = setTimeout(() => {
+        if (spinSkipWakeRef.current === wake) spinSkipWakeRef.current = null;
+        resolve();
+      }, ms);
+      const wake = () => {
+        clearTimeout(timer);
+        if (spinSkipWakeRef.current === wake) spinSkipWakeRef.current = null;
+        resolve();
+      };
+      spinSkipWakeRef.current = wake;
+    });
+  }, []);
+
+  const requestSkipCurrentAnimation = useCallback(() => {
+    skipCurrentSpinRef.current = true;
+    if (spinSkipWakeRef.current) {
+      const wake = spinSkipWakeRef.current;
+      spinSkipWakeRef.current = null;
+      wake();
+    }
+  }, []);
 
   // Robust Autoplay Refs to prevent stale closure loops
   const isAutoActiveRef = useRef<boolean>(false);
@@ -524,8 +551,8 @@ export default function SlotGamePage() {
       const spinCost = currentBet * config.costMultiplier;
       const animationSpeed = isSimulationRunRef.current || isAutoActiveRef.current
         ? autoSpeedFactorRef.current
-        : isSuperTurbo ? 2 : 1;
-      const pace = (milliseconds: number) => Math.max(45, Math.round(milliseconds / animationSpeed));
+        : isSuperTurbo ? 4 : isTurbo ? 2 : 1;
+      const pace = (milliseconds: number) => Math.max(25, Math.round(milliseconds / animationSpeed));
 
       // Stake Engine Rule [222]: Insufficient balance check
       const isBonusPreview = Boolean(previewOutcome);
@@ -544,6 +571,7 @@ export default function SlotGamePage() {
       if (isExecutingRef.current) return;
       if (isBonusIntroOpen || pendingBonus || isBonusActive || isCelebrationOpen || isMenuOpen || isPaytableOpen || isEnhancersOpen || isAutoOpen || isSkipBonusConfirmOpen) return;
       isExecutingRef.current = true;
+      skipCurrentSpinRef.current = false;
       setIsSpinning(true);
       setWinningHits([]);
       setActiveHitIndex(null);
@@ -613,17 +641,19 @@ export default function SlotGamePage() {
       for (let reelIdx = 0; reelIdx < 5; reelIdx++) {
         let reelDelay: number;
         if (reelIdx === 0) {
-          reelDelay = pace(isTurbo ? 300 : 1000);
+          reelDelay = isSuperTurbo ? 75 : isTurbo ? 170 : pace(820);
         } else if (!teaseActive) {
-          reelDelay = pace(isTurbo ? 160 : 420);
+          reelDelay = isSuperTurbo ? 40 : isTurbo ? 95 : pace(340);
         } else {
           // PROPER BUILDUP: Extended suspense anticipation spin!
-          reelDelay = pace(isTurbo ? 900 : 2000);
-          soundManager.playTeaseRiser(reelDelay / 1000);
-          soundManager.playTeaseHeartbeat();
+          reelDelay = isSuperTurbo ? 220 : isTurbo ? 520 : pace(1700);
+          if (!skipCurrentSpinRef.current) {
+            soundManager.playTeaseRiser(reelDelay / 1000);
+            soundManager.playTeaseHeartbeat();
+          }
         }
 
-        await new Promise((res) => setTimeout(res, reelDelay));
+        await waitOrSkip(reelDelay);
 
         // Stop this reel
         setSpinningReels((prev) => {
@@ -666,7 +696,7 @@ export default function SlotGamePage() {
         // Normal spins tease after two scatters; the high-frequency and
         // Unknown Extreme modes also build anticipation from a single scatter.
         const nearMissMode = modeToUse === 'bonus_chance' || modeToUse === 'unknown_extreme';
-        if ((currentScatters >= 2 || (nearMissMode && currentScatters >= 1)) && reelIdx < 4) {
+        if (!skipCurrentSpinRef.current && (currentScatters >= 2 || (nearMissMode && currentScatters >= 1)) && reelIdx < 4) {
           teaseActive = true;
           setTeaseReels((prev) => {
             const next = [...prev];
@@ -676,15 +706,19 @@ export default function SlotGamePage() {
         }
       }
 
+      // Reset skip flag after reels land so a second click can skip post-spin animations
+      skipCurrentSpinRef.current = false;
+
       // Let all five reels land first. Then the captain reveals the held-back
       // scatter with a sword slash, matching the booked board exactly.
       if (stagedScatter) {
         captainRevealShown = true;
-        await new Promise((res) => setTimeout(res, pace(1700)));
+        await waitOrSkip(pace(280));
         setCaptainReveal({ count: outcome.scatterCount, reel: stagedScatter.reel, row: stagedScatter.row, phase: 'cut' });
-        soundManager.playTeaseRiser(0.45);
-        await new Promise((res) => setTimeout(res, pace(1400)));
+        soundManager.playTeaseRiser(0.52);
+        await waitOrSkip(1400);
         setCaptainReveal({ count: outcome.scatterCount, reel: stagedScatter.reel, row: stagedScatter.row, phase: 'scatter' });
+        triggerExplosion((stagedScatter.reel + 0.5) * 20, (stagedScatter.row + 0.5) * 33.33, 'wild');
         setGrid((prev) => {
           const next = [...prev];
           next[stagedScatter.reel] = outcome.grid[stagedScatter.reel];
@@ -693,7 +727,7 @@ export default function SlotGamePage() {
         currentScatters += 1;
         setLandedScatterCount(currentScatters);
         soundManager.playGrandScatterBell(currentScatters);
-        await new Promise((res) => setTimeout(res, 500));
+        await waitOrSkip(1050);
         setCaptainReveal(null);
       }
 
@@ -711,7 +745,7 @@ export default function SlotGamePage() {
       if (outcome.bonusTriggered) {
         bonusAnimationSpeedRef.current = isSimulationRunRef.current || isAutoActiveRef.current
           ? autoSpeedFactorRef.current
-          : 1;
+          : isSuperTurbo ? 4 : isTurbo ? 2 : 1;
       }
       // Handle win — published books already include full feature value when a bonus triggers.
       if (outcome.totalWin > 0) {
@@ -720,9 +754,13 @@ export default function SlotGamePage() {
         setLastWin(outcome.bonusTriggered ? 0 : outcome.totalWin);
         setWinningHits(outcome.lineHits);
         setWildMultiplier(outcome.wildMultiplier);
-        // The swashbuckler only celebrates real profit: the win must beat what the spin cost.
-        // (Big wins bring him onto the celebration screen instead.)
-        if (!outcome.bonusTriggered && !isBigWinOutcome && outcome.totalWin > spinCost) {
+        // Only bring the swashbuckler out occasionally on notable wins (>= 5x spin cost, 25% chance)
+        if (
+          !outcome.bonusTriggered &&
+          !isBigWinOutcome &&
+          outcome.totalWin >= spinCost * 5 &&
+          Math.random() < 0.25
+        ) {
           showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
         }
         if (outcome.bonusTriggered) {
@@ -740,11 +778,14 @@ export default function SlotGamePage() {
           bonusLinePayoutTotalRef.current = 0;
         }
 
+        skipCurrentSpinRef.current = false;
+        const lineStepMs = isSuperTurbo ? 35 : isTurbo ? 90 : pace(310);
         for (let idx = 0; idx < outcome.lineHits.length; idx++) {
           setActiveHitIndex(idx);
-          soundManager.playLineWin(idx);
-          const stepTime = pace(isTurbo ? 280 : 650);
-          await new Promise((res) => setTimeout(res, stepTime));
+          if (!skipCurrentSpinRef.current) {
+            soundManager.playLineWin(idx);
+            await waitOrSkip(lineStepMs);
+          }
         }
 
         if (outcome.bonusTriggered) {
@@ -762,12 +803,14 @@ export default function SlotGamePage() {
           setBalance((prev) => prev + outcome.totalWin);
         }
         if (isBigWinOutcome && !outcome.bonusTriggered) {
-          await new Promise((res) => setTimeout(res, pace(2000)));
+          await waitOrSkip(isSuperTurbo ? 220 : isTurbo ? 450 : pace(950));
           setIsCelebrationTotal(false);
           setCelebrationAmount(outcome.totalWin);
           celebrationPendingRef.current = true;
           setIsCelebrationOpen(true);
-          showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
+          if (Math.random() < 0.45) {
+            showCaptainCameo(outcome.totalWin, outcome.totalWin / spinCost);
+          }
           soundManager.playWin(true);
         } else if (!outcome.bonusTriggered) {
           soundManager.playWin(false);
@@ -908,6 +951,10 @@ export default function SlotGamePage() {
       if (e.code === 'Space') {
         e.preventDefault();
         if (e.repeat || (e.target instanceof HTMLElement && (e.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)))) return;
+        if (isSpinning || isExecutingRef.current || isBonusSpinExecutingRef.current) {
+          requestSkipCurrentAnimation();
+          return;
+        }
         if (
           !isOpeningOpen &&
           !isSpinning &&
@@ -943,6 +990,7 @@ export default function SlotGamePage() {
     isPaytableOpen,
     isCelebrationOpen,
     executeSpin,
+    requestSkipCurrentAnimation,
   ]);
   // ----------------------------------------------------
   // Controlled Sequential Free Spins Executor
@@ -950,16 +998,20 @@ export default function SlotGamePage() {
   const runNextFreeSpin = useCallback(async () => {
     if (skipBonusNowRef.current) return;
     if (isBonusSpinExecutingRef.current) return;
-    const animationSpeed = bonusAnimationSpeedRef.current;
-    const pace = (milliseconds: number) => Math.max(45, Math.round(milliseconds / animationSpeed));
+    const animationSpeed = Math.max(
+      bonusAnimationSpeedRef.current,
+      isSuperTurbo ? 4 : isTurbo ? 2 : 1
+    );
+    const pace = (milliseconds: number) => Math.max(25, Math.round(milliseconds / animationSpeed));
     if (bonusSpinsRemainingRef.current <= 0) {
       const surge = wildSurgeRef.current;
       if (surge && surge.linesAwarded > 0 && wildSurgePhaseRef.current === 'pending') {
         isBonusSpinExecutingRef.current = true;
+        skipCurrentSpinRef.current = false;
         setIsSpinning(true);
         wildSurgePhaseRef.current = 'announcement';
         setWildSurgeAnnouncement({ wildCount: surge.wildCount, linesAwarded: surge.linesAwarded });
-        await new Promise((res) => setTimeout(res, pace(1800)));
+        await waitOrSkip(pace(1400));
         if (skipBonusNowRef.current) return;
 
         setWildSurgeAnnouncement(null);
@@ -970,8 +1022,9 @@ export default function SlotGamePage() {
         setSpinningReels([true, true, true, true, true]);
         soundManager.startReelSpin(isTurbo);
         const surgeResult = evaluateBonusSpinFrame(surge.frame, currentBet);
+        skipCurrentSpinRef.current = false;
         for (let reel = 0; reel < 5; reel++) {
-          await new Promise((res) => setTimeout(res, pace(isTurbo ? 200 : 480)));
+          await waitOrSkip(isSuperTurbo ? 45 : isTurbo ? 110 : pace(360));
           if (skipBonusNowRef.current) return;
           setSpinningReels((previous) => previous.map((value, index) => index === reel ? false : value));
           setGrid((previous) => previous.map((column, index) => index === reel ? surgeResult.grid[reel] : column));
@@ -983,21 +1036,25 @@ export default function SlotGamePage() {
         bonusMultiplierRef.current = surgeResult.multiplier;
         setBonusMultiplier(surgeResult.multiplier);
         setWildMultiplier(surgeResult.multiplier);
-        await new Promise((res) => setTimeout(res, BONUS_MULTIPLIER_ROLL_MS));
+        await waitOrSkip(isSuperTurbo ? 90 : isTurbo ? 180 : pace(BONUS_MULTIPLIER_ROLL_MS));
         if (skipBonusNowRef.current) return;
         const surgeHits = surgeResult.lineHits;
         setWinningHits(surgeHits);
         const spinWinBeforeConnections = bonusAccumulatedWinRef.current;
         let finalWinShown = false;
+        skipCurrentSpinRef.current = false;
+        const surgeLineStepMs = isSuperTurbo ? 40 : isTurbo ? 95 : pace(300);
         for (let index = 0; index < surgeHits.length; index++) {
           setActiveHitIndex(index);
-          soundManager.playLineWin(index);
           setLastWin(advanceBonusPayoutProgress(
             surgeHits[index].winAmount,
             bonusPayoutProgressRef.current,
             index === surgeHits.length - 1,
           ));
-          await new Promise((res) => setTimeout(res, pace(isTurbo ? 250 : 550) + 1000));
+          if (!skipCurrentSpinRef.current) {
+            soundManager.playLineWin(index);
+            await waitOrSkip(surgeLineStepMs);
+          }
           if (skipBonusNowRef.current) return;
           finalWinShown = true;
         }
@@ -1009,7 +1066,7 @@ export default function SlotGamePage() {
         setIsSpinning(false);
         isBonusSpinExecutingRef.current = false;
         wildSurgePhaseRef.current = 'done';
-        setTimeout(() => runNextFreeSpinRef.current(), pace(600));
+        setTimeout(() => runNextFreeSpinRef.current(), isSuperTurbo ? 120 : isTurbo ? 240 : pace(450));
         return;
       }
 
@@ -1035,27 +1092,31 @@ export default function SlotGamePage() {
       isSimulationBonusPreviewRef.current = false;
       setIsSimulationBonusPreview(false);
       isSimulationRunRef.current = false;
-      setIsBonusActive(false);
       setWildSurgeFinaleActive(false);
       wildSurgeRef.current = undefined;
       wildSurgePhaseRef.current = 'done';
       setIsSpinning(false);
       isBonusSpinExecutingRef.current = false;
       setTimeout(() => {
+        setIsBonusActive(false);
+        setBonusMultiplierRollCue(null);
         setIsCelebrationTotal(true);
         setCelebrationAmount(finalBonusTotal);
         setIsCelebrationOpen(true);
-        if (finalBonusTotal > 0) showCaptainCameo(finalBonusTotal, finalBonusTotal / currentBet);
+        if (finalBonusTotal > 0 && Math.random() < 0.35) {
+          showCaptainCameo(finalBonusTotal, finalBonusTotal / currentBet);
+        }
         settlePausedSimulation('Bonus round complete. Resume the remaining simulation spins.');
-      }, 1000);
+      }, isSuperTurbo ? 350 : isTurbo ? 550 : 900);
       return;
     }
 
     isBonusSpinExecutingRef.current = true;
+    skipCurrentSpinRef.current = false;
     setIsSpinning(true);
 
     // Initial spin pause - comfortable slot pacing
-    await new Promise((res) => setTimeout(res, pace(isTurbo ? 220 : 550)));
+    await waitOrSkip(isSuperTurbo ? 45 : isTurbo ? 110 : pace(360));
     if (skipBonusNowRef.current) return;
 
     setSpinningReels([true, true, true, true, true]);
@@ -1073,8 +1134,8 @@ export default function SlotGamePage() {
 
     // Sequential stops across the 5 reels with visible rolling & deceleration
     for (let r = 0; r < 5; r++) {
-      const delay = pace(isTurbo ? 200 : 480);
-      await new Promise((res) => setTimeout(res, delay));
+      const delay = isSuperTurbo ? 40 : isTurbo ? 105 : pace(340);
+      await waitOrSkip(delay);
       if (skipBonusNowRef.current) return;
 
       setSpinningReels((prev) => {
@@ -1098,7 +1159,7 @@ export default function SlotGamePage() {
     bonusMultiplierRef.current = freeRes.multiplier;
     // Keep the published frame multiplier and paytable line values intact.
     setBonusMultiplier(freeRes.multiplier);
-    await new Promise((res) => setTimeout(res, BONUS_MULTIPLIER_ROLL_MS));
+    await waitOrSkip(isSuperTurbo ? 75 : isTurbo ? 160 : pace(420));
     if (skipBonusNowRef.current) return;
     const wildsOnBoard = freeRes.grid.reduce((count, reel) => count + reel.filter((symbol) => symbol === 'WILD').length, 0);
     bonusWildCountRef.current += wildsOnBoard;
@@ -1114,13 +1175,12 @@ export default function SlotGamePage() {
       setBonusTotalSpins(bonusTotalSpinsRef.current);
       setRetriggerSpins(freeRes.retriggerSpins);
       soundManager.playScatterLand(3);
-      await new Promise((res) => setTimeout(res, pace(1400)));
+      await waitOrSkip(isSuperTurbo ? 260 : isTurbo ? 550 : pace(1100));
       if (skipBonusNowRef.current) return;
       setRetriggerSpins(0);
     }
 
     setBonusSpinsRemaining(bonusSpinsRemainingRef.current);
-
 
     // Show each exact paytable connection and add that same amount to the
     // running round total.
@@ -1129,15 +1189,19 @@ export default function SlotGamePage() {
     const hasSurge = Boolean(wildSurgeRef.current?.linesAwarded);
     const isFinalBonusFrame = !hasAnotherFrame && !hasSurge;
     setWinningHits(lineHitsToShow);
+    skipCurrentSpinRef.current = false;
+    const freeSpinLineStepMs = isSuperTurbo ? 35 : isTurbo ? 85 : pace(280);
     for (let idx = 0; idx < lineHitsToShow.length; idx++) {
       setActiveHitIndex(idx);
-      soundManager.playLineWin(idx);
       setLastWin(advanceBonusPayoutProgress(
         lineHitsToShow[idx].winAmount,
         bonusPayoutProgressRef.current,
         isFinalBonusFrame && idx === lineHitsToShow.length - 1,
       ));
-      await new Promise((res) => setTimeout(res, pace(isTurbo ? 250 : 550) + 1000));
+      if (!skipCurrentSpinRef.current) {
+        soundManager.playLineWin(idx);
+        await waitOrSkip(freeSpinLineStepMs);
+      }
       if (skipBonusNowRef.current) return;
     }
 
@@ -1149,10 +1213,12 @@ export default function SlotGamePage() {
     const spinWin = freeRes.spinWin;
     const isBig = spinWin >= currentBet * 30;
     soundManager.playWin(isBig);
-    // Free spins cost nothing, so only bring him out when a spin pays at least the base bet.
-    if (spinWin >= currentBet) showCaptainCameo(spinWin, spinWin / currentBet);
+    // Only bring the swashbuckler out occasionally on strong free spin hits (>= 8x bet, 22% chance)
+    if (spinWin >= currentBet * 8 && Math.random() < 0.22) {
+      showCaptainCameo(spinWin, spinWin / currentBet);
+    }
     if (isBig) {
-      await new Promise((res) => setTimeout(res, pace(2000)));
+      await waitOrSkip(isSuperTurbo ? 200 : isTurbo ? 420 : pace(900));
       if (skipBonusNowRef.current) return;
       setActiveHitIndex(null);
       setIsCelebrationTotal(false);
@@ -1163,7 +1229,11 @@ export default function SlotGamePage() {
       return;
     }
 
-    await new Promise((res) => setTimeout(res, pace(lineHitsToShow.length ? (isTurbo ? 600 : 1200) : (isTurbo ? 350 : 800))));
+    await waitOrSkip(
+      lineHitsToShow.length
+        ? isSuperTurbo ? 70 : isTurbo ? 160 : pace(420)
+        : isSuperTurbo ? 45 : isTurbo ? 110 : pace(280)
+    );
     if (skipBonusNowRef.current) return;
 
     setActiveHitIndex(null);
@@ -1174,11 +1244,11 @@ export default function SlotGamePage() {
     if (bonusSpinsRemainingRef.current > 0) {
       setTimeout(() => {
         runNextFreeSpinRef.current();
-      }, pace(isTurbo ? 350 : 850));
+      }, isSuperTurbo ? 55 : isTurbo ? 130 : pace(360));
     } else {
-      setTimeout(() => runNextFreeSpinRef.current(), 500);
+      setTimeout(() => runNextFreeSpinRef.current(), isSuperTurbo ? 90 : isTurbo ? 180 : 350);
     }
-  }, [currentBet, isTurbo, sessionParams.rgsUrl, sessionParams.sessionId, settlePausedSimulation, showCaptainCameo]);
+  }, [currentBet, isTurbo, isSuperTurbo, sessionParams.rgsUrl, sessionParams.sessionId, settlePausedSimulation, showCaptainCameo, waitOrSkip]);
 
   // Keep runNextFreeSpinRef synced
   useEffect(() => {
@@ -1689,8 +1759,16 @@ export default function SlotGamePage() {
               </button>
             </div>
 
-            {/* Central 5x3 Reel Grid Frame */}
-            <div className="game-reel-shell relative flex-1 max-w-[1600px] flex items-center justify-center min-h-0">
+            {/* Central 5x3 Reel Grid Frame — Click/tap during active spin or win animation to fast-forward/finish */}
+            <div
+              onPointerDown={(e) => {
+                if ((e.target as HTMLElement)?.closest('button, a, input, select')) return;
+                if (isSpinning || isExecutingRef.current || isBonusSpinExecutingRef.current) {
+                  requestSkipCurrentAnimation();
+                }
+              }}
+              className="game-reel-shell relative flex-1 max-w-[1600px] flex items-center justify-center min-h-0"
+            >
               {/* Round line multiplier banner pinned above the reel frame */}
               <div className="game-multiplier-anchor absolute left-1/2 z-30 pointer-events-none">
                 <MultiplierBanner
@@ -1741,7 +1819,13 @@ export default function SlotGamePage() {
               onDecreaseBet={handleDecreaseBet}
               lastWin={lastWin}
               isSpinning={isSpinning}
-              onSpin={() => executeSpin()}
+              onSpin={() => {
+                if (isSpinning || isExecutingRef.current || isBonusSpinExecutingRef.current) {
+                  requestSkipCurrentAnimation();
+                  return;
+                }
+                executeSpin();
+              }}
               isAutoActive={isAutoActive}
               autoSpinsRemaining={autoSpinsRemaining}
               onOpenAuto={() => setIsAutoOpen(true)}

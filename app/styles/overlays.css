@@ -1,0 +1,1342 @@
+/* ==========================================================================
+   Sea Raider — Hand-Crafted Studio Overlays
+   (WinCelebration, BonusIntroModal, EnhancersModal, FeatureBuyButton, OpeningModal)
+   Loaded after globals.css and scene.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. WIN CELEBRATION — Carved Brass & Mahogany Monument + Physics Coin Shower
+   -------------------------------------------------------------------------- */
+
+.win-celebration {
+  --tier-accent: #e8b44c;
+  --tier-trim: #2ccfd1;
+  --tier-ribbon: linear-gradient(180deg, #6e2214 0%, #461209 58%, #290904 100%);
+  perspective: 1100px;
+}
+
+.win-celebration__backdrop {
+  background:
+    radial-gradient(ellipse 65% 55% at 50% 46%, rgba(18, 56, 66, 0.56) 0%, rgba(5, 18, 26, 0.88) 62%, rgba(2, 6, 11, 0.96) 100%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.win-celebration__rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 10deg,
+    rgba(242, 188, 82, 0.085) 10deg 16deg,
+    transparent 16deg 28deg,
+    rgba(44, 207, 209, 0.055) 28deg 33deg
+  );
+  mask-image: radial-gradient(circle at 50% 50%, #000 10%, transparent 66%);
+  animation: win-rays-rotate 46s linear infinite;
+}
+
+@keyframes win-rays-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.win-celebration__horizon {
+  background:
+    linear-gradient(0deg, rgba(3, 10, 15, 0.9) 0%, transparent 100%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(232, 172, 70, 0.2), transparent 70%);
+}
+
+/* Dust & Gold Sparkle Radial Burst behind Title Plaque */
+.win-plaque__burst {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.win-plaque__shockwave {
+  position: absolute;
+  left: -150px;
+  top: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 226, 142, 0.88);
+  box-shadow: 0 0 24px rgba(232, 178, 72, 0.55), inset 0 0 18px rgba(232, 178, 72, 0.35);
+  animation: win-shockwave-out 0.68s cubic-bezier(0.12, 0.88, 0.25, 1) forwards;
+}
+
+@keyframes win-shockwave-out {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.32);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}
+
+.win-plaque__mote {
+  position: absolute;
+  left: calc(var(--mote-size) * -0.5);
+  top: calc(var(--mote-size) * -0.5);
+  width: var(--mote-size);
+  height: var(--mote-size);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf2 0%, #ffd875 55%, #c98219 100%);
+  box-shadow: 0 0 8px rgba(255, 210, 102, 0.8);
+  animation: win-mote-fly 0.76s cubic-bezier(0.12, 0.9, 0.24, 1) forwards;
+}
+
+.win-plaque__mote--star {
+  border-radius: 0;
+  width: calc(var(--mote-size) * 1.45);
+  height: calc(var(--mote-size) * 1.45);
+  background: #fff7d1;
+  clip-path: polygon(50% 0%, 63% 37%, 100% 50%, 63% 63%, 50% 100%, 37% 63%, 0% 50%, 37% 37%);
+}
+
+@keyframes win-mote-fly {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--mote-angle)) translateY(-18px) scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: rotate(var(--mote-angle)) translateY(calc(var(--mote-dist) * -0.78)) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--mote-angle)) translateY(calc(var(--mote-dist) * -1.12)) scale(0.15);
+  }
+}
+
+/* Top Emblem Medallion */
+.win-monument__crest {
+  position: relative;
+}
+
+.win-monument__crest-ring {
+  position: absolute;
+  width: clamp(104px, 14vw, 144px);
+  height: clamp(104px, 14vw, 144px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 214, 112, 0.36) 0%, rgba(16, 78, 86, 0.5) 58%, rgba(5, 20, 26, 0.92) 100%);
+  box-shadow:
+    0 0 0 3px #f3c868,
+    0 0 0 6px #46270c,
+    0 0 0 8px #b9812c,
+    0 14px 32px rgba(0, 0, 0, 0.85),
+    inset 0 2px 6px rgba(255, 244, 200, 0.45);
+}
+
+/* Carved Gold/Brass Lettered Title Plaque */
+.win-plaque {
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 236, 175, 0.14) 0%, transparent 28%, rgba(0, 0, 0, 0.42) 100%),
+    var(--wood-grain),
+    var(--tier-ribbon);
+  background-size: auto, 380px 110px, auto;
+  box-shadow:
+    0 0 0 2px #fff1c2,
+    0 0 0 5px #d49b38,
+    0 0 0 8px #2e1808,
+    0 0 0 10px #8f5e1e,
+    0 22px 48px rgba(0, 0, 0, 0.88),
+    inset 0 2px 0 rgba(255, 244, 204, 0.4),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.6);
+  transform-origin: 50% 50%;
+}
+
+.win-plaque__rivet {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4cc 0%, #d49836 48%, #523009 92%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(40, 20, 4, 0.5);
+}
+.win-plaque__rivet--tl { left: 10px; top: 10px; }
+.win-plaque__rivet--tr { right: 10px; top: 10px; }
+.win-plaque__rivet--bl { left: 10px; bottom: 10px; }
+.win-plaque__rivet--br { right: 10px; bottom: 10px; }
+
+.win-plaque__kicker {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(9px, 1vw, 11px);
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  color: #b7ece8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+  text-transform: uppercase;
+}
+
+.win-plaque__title {
+  margin-top: 2px;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(36px, 6.2vw, 62px);
+  font-weight: 400;
+  line-height: 0.96;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fffef7 0%, #ffe89e 38%, #e5a332 76%, #a86812 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #1f0d04) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85));
+}
+
+.win-plaque__sub-bar {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.win-plaque__sub-rule {
+  height: 1.5px;
+  flex: 1;
+  max-width: 68px;
+  background: linear-gradient(90deg, transparent, #f0c368, transparent);
+}
+
+.win-plaque__sub {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.15vw, 13px);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: #ffe6a6;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  text-transform: uppercase;
+}
+
+/* Progressive Tier Escalation Pips */
+.win-tier-pip {
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-family: var(--font-engraved), serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgba(235, 214, 175, 0.45);
+  background: linear-gradient(180deg, #241409, #140b05);
+  border: 1px solid rgba(168, 118, 52, 0.32);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.win-tier-pip.is-reached {
+  color: #ffe8a8;
+  border-color: #d49b38;
+  background: linear-gradient(180deg, #4a2a10, #281507);
+}
+
+.win-tier-pip.is-current {
+  color: #1f1004;
+  border-color: #fff2c2;
+  background: linear-gradient(180deg, #ffefb5 0%, #e5ac42 55%, #b57618 100%);
+  box-shadow: 0 0 0 2px #3b2009, 0 4px 10px rgba(0, 0, 0, 0.65);
+  transform: translateY(-2px) scale(1.07);
+}
+
+/* Carved Timber & Brass Count-Up Plaque */
+.win-counter {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(232, 176, 68, 0.16), transparent 65%),
+    linear-gradient(180deg, #140b05 0%, #221309 50%, #120904 100%);
+  box-shadow:
+    0 0 0 2px #e0a844,
+    0 0 0 5px #2e1808,
+    0 0 0 6.5px #8a5a1c,
+    0 18px 42px rgba(0, 0, 0, 0.85),
+    inset 0 3px 12px rgba(0, 0, 0, 0.9);
+}
+
+.win-counter--settled {
+  box-shadow:
+    0 0 0 2px #fff0bc,
+    0 0 0 5px #381e0a,
+    0 0 0 7px #d89f3c,
+    0 20px 46px rgba(0, 0, 0, 0.88),
+    inset 0 2px 10px rgba(0, 0, 0, 0.85);
+}
+
+.win-counter__corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid #f0c265;
+  pointer-events: none;
+}
+.win-counter__corner--tl { left: 6px; top: 6px; border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; }
+.win-counter__corner--tr { right: 6px; top: 6px; border-left: 0; border-bottom: 0; border-radius: 0 6px 0 0; }
+.win-counter__corner--bl { left: 6px; bottom: 6px; border-right: 0; border-top: 0; border-radius: 0 0 0 6px; }
+.win-counter__corner--br { right: 6px; bottom: 6px; border-left: 0; border-top: 0; border-radius: 0 0 6px 0; }
+
+.win-counter__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(108deg, transparent 32%, rgba(255, 245, 200, 0.32) 50%, transparent 68%);
+  transform: translateX(-120%);
+  animation: win-counter-sheen 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes win-counter-sheen {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.win-counter__digits {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(40px, 7.2vw, 72px);
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.win-counter__char {
+  display: inline-block;
+  background: linear-gradient(180deg, #fffef6 0%, #ffe699 42%, #e09b2b 82%, #9e600e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #1c0c03) drop-shadow(0 5px 10px rgba(0, 0, 0, 0.85));
+}
+
+.win-counter__char--digit {
+  min-width: 0.54em;
+  text-align: center;
+}
+
+.win-counter--rolling .win-counter__char--digit:nth-child(odd) {
+  animation: win-digit-roll-a 0.13s ease-in-out infinite alternate;
+}
+
+.win-counter--rolling .win-counter__char--digit:nth-child(even) {
+  animation: win-digit-roll-b 0.13s ease-in-out infinite alternate;
+}
+
+@keyframes win-digit-roll-a {
+  from { transform: translateY(-1.5px); }
+  to { transform: translateY(1.5px); }
+}
+
+@keyframes win-digit-roll-b {
+  from { transform: translateY(1.5px); }
+  to { transform: translateY(-1.5px); }
+}
+
+.win-counter__mult {
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(12, 46, 54, 0.72);
+  border: 1px solid rgba(126, 232, 224, 0.4);
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.2vw, 13px);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #c8f5f0;
+}
+
+.win-counter__mult span {
+  color: #ffe596;
+}
+
+.win-celebration__prompt {
+  padding: 6px 18px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #38200e 0%, #1d0f06 100%);
+  border: 1.5px solid #c99238;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 235, 180, 0.25);
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.1vw, 12px);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: #ffeaad;
+}
+
+.win-celebration__disclaimer {
+  font-family: var(--font-ink), Georgia, serif;
+  font-size: 11px;
+  color: rgba(236, 222, 192, 0.72);
+}
+
+@media (max-height: 520px) {
+  .win-monument__badge {
+    height: 72px !important;
+    width: 90px !important;
+  }
+  .win-monument__crest-ring {
+    width: 76px;
+    height: 76px;
+  }
+  .win-plaque {
+    padding: 8px 16px !important;
+  }
+  .win-plaque__title {
+    font-size: clamp(26px, 5vw, 38px);
+  }
+  .win-tier-ladder {
+    margin-top: 6px !important;
+  }
+  .win-counter {
+    margin-top: 6px !important;
+    padding: 8px 16px !important;
+  }
+  .win-counter__digits {
+    font-size: clamp(28px, 6vw, 44px);
+  }
+  .win-celebration__footer {
+    margin-top: 6px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. BONUS INTRO MODAL — Weathered Ship-Log Charter & Carved Timber Board
+   -------------------------------------------------------------------------- */
+
+html #game-surface .bonus-intro .bonus-charter,
+.bonus-intro .bonus-charter {
+  position: relative;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  transform-origin: 50% 12%;
+}
+
+.bonus-charter__beam {
+  position: relative;
+  z-index: 3;
+  display: block;
+  height: 18px;
+  margin: 0 -10px;
+  border-radius: 9px;
+  background:
+    linear-gradient(90deg, #5e3814 0%, #8f5924 18%, #6d4118 50%, #8f5924 82%, #5e3814 100%),
+    linear-gradient(180deg, #9c642c 0%, #583312 52%, #2b1606 100%);
+  background-blend-mode: overlay, normal;
+  box-shadow:
+    0 0 0 1.5px #241104,
+    0 6px 14px rgba(0, 0, 0, 0.72),
+    inset 0 2px 1px rgba(255, 224, 166, 0.42);
+}
+
+.bonus-charter__beam::before,
+.bonus-charter__beam::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #dea442 44%, #6e410e 88%);
+  box-shadow: 0 0 0 1.5px #2b1606, 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+.bonus-charter__beam::before { left: -8px; }
+.bonus-charter__beam::after { right: -8px; }
+.bonus-charter__beam--top { margin-bottom: -6px; }
+.bonus-charter__beam--bottom { margin-top: -6px; }
+
+.bonus-charter__board {
+  padding: clamp(18px, 2.8vh, 30px) clamp(18px, 3vw, 38px) clamp(16px, 2.4vh, 26px);
+  border-radius: 6px;
+  color: #361c0a;
+  background:
+    var(--paper-noise),
+    radial-gradient(ellipse at 50% 30%, #fbf0d4 0%, #efd8a5 54%, #d7b271 88%, #ba8d4a 100%);
+  box-shadow:
+    0 0 0 2px #5e3914,
+    0 0 0 6px #2b1607,
+    0 0 0 8px #d8a240,
+    0 28px 72px rgba(0, 0, 0, 0.88),
+    inset 0 0 42px rgba(125, 70, 18, 0.42),
+    inset 0 0 6px rgba(70, 35, 8, 0.55);
+}
+
+.bonus-charter__rivet {
+  position: absolute;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #d89b38 48%, #54300a 92%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.65);
+}
+.bonus-charter__rivet--tl { left: 12px; top: 12px; }
+.bonus-charter__rivet--tr { right: 12px; top: 12px; }
+.bonus-charter__rivet--bl { left: 12px; bottom: 12px; }
+.bonus-charter__rivet--br { right: 12px; bottom: 12px; }
+
+.bonus-charter__watermark {
+  position: absolute;
+  right: -36px;
+  top: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translateY(-50%);
+  color: rgba(110, 64, 20, 0.09);
+  z-index: 0;
+}
+
+.bonus-charter__eyebrow-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.bonus-charter__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9e2116 0%, #68110a 100%);
+  box-shadow:
+    0 0 0 1.5px #f2c66d,
+    0 0 0 3.5px #3d1d08,
+    0 4px 10px rgba(50, 18, 4, 0.45),
+    inset 0 1px 0 rgba(255, 220, 190, 0.4);
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.1vw, 12.5px);
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  color: #ffecb8;
+  text-transform: uppercase;
+}
+
+.bonus-charter__eyebrow-star {
+  color: #ffd56b;
+  font-size: 11px;
+}
+
+.bonus-charter__title {
+  position: relative;
+  z-index: 1;
+  margin: clamp(8px, 1.4vh, 14px) auto 0;
+  max-width: 18ch;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(30px, 4.3vw, 54px);
+  line-height: 0.98;
+  letter-spacing: 0.02em;
+  color: #461207;
+  text-shadow:
+    0 1px 0 rgba(255, 250, 232, 0.92),
+    0 3px 10px rgba(90, 36, 8, 0.22);
+}
+
+/* High-Contrast Carved Wood & Brass Sub-Head Banner — 100% Legible */
+.bonus-charter__subhead-bar {
+  position: relative;
+  z-index: 1;
+  margin: clamp(8px, 1.4vh, 14px) auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #381d0b 0%, #1e0e04 50%, #381d0b 100%);
+  box-shadow:
+    0 0 0 1.5px #d49c3d,
+    0 0 0 3px #4a280e,
+    0 5px 12px rgba(45, 20, 4, 0.35),
+    inset 0 1px 0 rgba(255, 230, 175, 0.22);
+}
+
+.bonus-charter__subhead-ornament {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: #f0c264;
+  flex: none;
+}
+
+.bonus-charter__subhead {
+  margin: 0;
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(13px, 1.5vw, 17px);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  color: #ffe8a3;
+  text-shadow: 0 1px 2px #000;
+  text-transform: uppercase;
+}
+
+/* Twin Engraved Brass Medallions for Scatters & Free Spins */
+html #game-surface .bonus-intro .bonus-charter__medallions,
+.bonus-charter__medallions {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(12px, 2.2vh, 22px);
+  padding: 6px 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2.8vw, 32px);
+}
+
+.bonus-medallion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bonus-medallion__coin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: clamp(82px, 9.2vw, 108px);
+  height: clamp(82px, 9.2vw, 108px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, #176975 0%, #09353e 60%, #04191f 100%);
+  box-shadow:
+    0 0 0 3px #f6cd72,
+    0 0 0 6px #5e3810,
+    0 0 0 8px #d49b3b,
+    0 10px 22px rgba(45, 22, 5, 0.55),
+    inset 0 3px 6px rgba(255, 255, 255, 0.32),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.68);
+}
+
+.bonus-medallion--spins .bonus-medallion__coin {
+  background:
+    radial-gradient(circle at 50% 30%, #8e2418 0%, #4d1009 62%, #240603 100%);
+}
+
+.bonus-medallion__rim {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 232, 168, 0.55);
+  pointer-events: none;
+}
+
+.bonus-medallion__value {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(30px, 3.6vw, 44px);
+  line-height: 0.92;
+  color: #fff6d6;
+  text-shadow: 0 2px 0 #04181e, 0 0 12px rgba(255, 215, 110, 0.45);
+}
+
+.bonus-medallion__unit {
+  margin-top: 2px;
+  font-family: var(--font-engraved), serif;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #b8f2ec;
+}
+
+.bonus-medallion--spins .bonus-medallion__unit {
+  color: #ffd8b0;
+}
+
+.bonus-medallion__plate {
+  position: relative;
+  z-index: 2;
+  margin-top: -10px;
+  padding: 4px 14px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fff0be 0%, #e4b252 52%, #a66c1a 100%);
+  box-shadow:
+    0 0 0 1.5px #3b2007,
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.05vw, 12px);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #241103;
+  white-space: nowrap;
+}
+
+.bonus-charter__medallion-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #7a4b1e;
+}
+
+.bonus-charter__medallion-divider span {
+  width: 1.5px;
+  height: 18px;
+  background: rgba(110, 66, 24, 0.4);
+}
+
+.bonus-charter__medallion-divider i {
+  font-style: normal;
+  font-size: 16px;
+}
+
+/* Ship's Ledger Callout Box */
+.bonus-charter__ledger-note {
+  position: relative;
+  z-index: 1;
+  margin: clamp(10px, 1.8vh, 18px) auto 0;
+  max-width: 460px;
+  padding: 9px 16px;
+  border-radius: 6px;
+  background: rgba(255, 250, 236, 0.58);
+  border: 1.5px solid rgba(108, 66, 24, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.bonus-charter__ledger-title {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10.5px, 1.1vw, 12px);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #7a180d;
+}
+
+.bonus-charter__ledger-desc {
+  margin: 3px 0 0;
+  font-family: var(--font-ink), Georgia, serif;
+  font-size: clamp(12.5px, 1.3vw, 14.5px);
+  line-height: 1.3;
+  color: #361e0c;
+}
+
+/* PLAY BONUS Crafted Command Button */
+.bonus-charter__cta {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  margin-top: clamp(12px, 2.2vh, 22px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 340px;
+  min-height: 52px;
+  padding: 10px 28px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  background: linear-gradient(180deg, #c63222 0%, #8e1910 55%, #560b06 100%);
+  box-shadow:
+    0 0 0 2px #ffe8a6,
+    0 0 0 5px #4e2b0b,
+    0 0 0 6.5px #d49c3d,
+    0 10px 24px rgba(40, 14, 3, 0.65),
+    inset 0 2px 1px rgba(255, 220, 190, 0.48);
+  transition: filter 0.15s ease;
+}
+
+.bonus-charter__cta:hover {
+  filter: brightness(1.1);
+}
+
+.bonus-charter__cta-label {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(22px, 2.4vw, 28px);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: #fff6d6;
+  text-shadow: 0 2px 0 #380704;
+}
+
+.bonus-charter__cta-rivet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4cc 0%, #d49836 52%, #4a2906 95%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.bonus-charter__cta-sheen {
+  position: absolute;
+  inset: -40% auto -40% -60%;
+  width: 36%;
+  background: linear-gradient(100deg, transparent, rgba(255, 245, 210, 0.42), transparent);
+  transform: skewX(-18deg);
+  animation: sheen-sweep 3.4s ease-in-out infinite;
+}
+
+.bonus-charter__hint {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0 0;
+  font-family: var(--font-engraved), serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #5c3818;
+}
+
+@media (max-width: 639px) and (min-height: 501px) {
+  html #game-surface .bonus-intro {
+    align-items: flex-end;
+    padding: 10px 10px 2.5vh;
+  }
+  html #game-surface .bonus-intro .bonus-charter__board {
+    padding: 14px 14px 12px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__medallions {
+    margin-top: 10px;
+    gap: 14px;
+  }
+  html #game-surface .bonus-intro .bonus-medallion__coin {
+    width: 74px;
+    height: 74px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__cta {
+    min-height: 44px;
+    margin-top: 10px;
+  }
+}
+
+@media (max-height: 500px) {
+  html #game-surface .bonus-intro .bonus-charter {
+    max-width: 60vw;
+    margin-right: 1.5vw;
+  }
+  html #game-surface .bonus-intro .bonus-charter__beam {
+    height: 12px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__board {
+    padding: 10px 14px 8px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__title {
+    font-size: clamp(20px, 3.6vw, 30px);
+    margin-top: 4px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__subhead-bar {
+    margin-top: 4px;
+    padding: 4px 10px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__subhead {
+    font-size: 11px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__medallions {
+    margin-top: 6px;
+    padding: 2px 0;
+    gap: 12px;
+  }
+  html #game-surface .bonus-intro .bonus-medallion__coin {
+    width: 58px;
+    height: 58px;
+  }
+  html #game-surface .bonus-intro .bonus-medallion__value {
+    font-size: 22px;
+  }
+  html #game-surface .bonus-intro .bonus-medallion__unit {
+    display: none;
+  }
+  html #game-surface .bonus-intro .bonus-medallion__plate {
+    font-size: 8.5px;
+    padding: 2px 8px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__ledger-note {
+    display: none;
+  }
+  html #game-surface .bonus-intro .bonus-charter__cta {
+    margin-top: 6px;
+    min-height: 36px;
+    padding: 5px 16px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__cta-label {
+    font-size: 17px;
+  }
+  html #game-surface .bonus-intro .bonus-charter__hint {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. ENHANCERS MODAL (BONUS BUY MENU) — Responsive 6-Card Grid, Zero Horizontal Scroll
+   -------------------------------------------------------------------------- */
+
+html #game-surface .feature-harbor,
+.feature-harbor {
+  padding: clamp(8px, 1.6vh, 18px) clamp(10px, 2.2vw, 28px);
+  gap: clamp(8px, 1.4vh, 14px);
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse at 50% 25%, rgba(16, 56, 66, 0.52) 0%, rgba(4, 15, 24, 0.92) 68%, rgba(2, 6, 12, 0.97) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.feature-harbor__header {
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+.feature-harbor__bet-pill {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2d190b 0%, #170c04 100%);
+  border: 1.5px solid #c8943c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 232, 175, 0.25);
+}
+
+.feature-harbor__bet-label {
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #cfa763;
+}
+
+.feature-harbor__bet-val {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: 20px;
+  line-height: 1;
+  color: #ffe69e;
+}
+
+html #game-surface .feature-harbor__title,
+.feature-harbor__title {
+  font-size: clamp(28px, 3.8vw, 52px);
+  line-height: 0.96;
+}
+
+html #game-surface .feature-harbor__sub,
+.feature-harbor__sub {
+  margin-top: 3px;
+  font-size: clamp(12px, 1.15vw, 15px);
+  color: #f3e4c3;
+  opacity: 0.92;
+}
+
+.feature-harbor__scroll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive 6-Card Bounty Grid — Fits all 6 on desktop (3x2), wraps on tablet/mobile */
+.bounty-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 18px);
+  align-items: stretch;
+  margin-block: auto;
+  padding: 6px 4px;
+}
+
+@media (max-width: 959px) {
+  .feature-harbor__scroll {
+    align-items: flex-start;
+  }
+  .bounty-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 599px) {
+  .bounty-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
+/* Individual Charter Card */
+html #game-surface .bounty-card,
+.bounty-card {
+  --accent: #2ccfd1;
+  min-height: 0;
+  padding: 14px 14px 12px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font-ink), Georgia, serif;
+  background:
+    var(--paper-noise),
+    radial-gradient(ellipse at 50% 28%, #fbf0d4 0%, #edd5a2 58%, #d4ad6a 92%, #b88b48 100%);
+  box-shadow:
+    0 0 0 1.5px #6b441e,
+    0 0 0 4px #2c1809,
+    0 0 0 5.5px #c8943c,
+    0 14px 30px rgba(0, 0, 0, 0.72),
+    inset 0 0 32px rgba(130, 76, 22, 0.35);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+html #game-surface .bounty-card::before,
+.bounty-card::before {
+  height: 5px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(90deg, transparent, var(--accent) 16%, var(--accent) 84%, transparent);
+  opacity: 0.92;
+}
+
+html #game-surface .bounty-card:hover,
+.bounty-card:hover {
+  box-shadow:
+    0 0 0 1.5px #fff0bf,
+    0 0 0 4px #2c1809,
+    0 0 0 6px #e5b254,
+    0 20px 38px rgba(0, 0, 0, 0.8),
+    inset 0 0 32px rgba(130, 76, 22, 0.32);
+}
+
+html #game-surface .bounty-card--active,
+.bounty-card--active {
+  box-shadow:
+    0 0 0 2px #9efce0,
+    0 0 0 5px #0d4b3c,
+    0 0 0 7px #3fd3a0,
+    0 18px 36px rgba(0, 0, 0, 0.8),
+    inset 0 0 32px rgba(130, 76, 22, 0.32);
+}
+
+.bounty-card__rivet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c8 0%, #d49836 50%, #523009 92%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.bounty-card__rivet--tl { left: 7px; top: 8px; }
+.bounty-card__rivet--tr { right: 7px; top: 8px; }
+.bounty-card__rivet--bl { left: 7px; bottom: 52px; }
+.bounty-card__rivet--br { right: 7px; bottom: 52px; }
+
+/* Card Header Row: Porthole + Title + Multiplier Seal */
+.bounty-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+html #game-surface .bounty-card__porthole,
+.bounty-card__porthole {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #103c4a 0%, #051820 74%);
+  box-shadow:
+    0 0 0 2.5px #e0ab4e,
+    0 0 0 4.5px #4e2f0e,
+    0 0 0 5.5px #f2cb78,
+    0 4px 10px rgba(50, 24, 4, 0.45),
+    inset 0 0 14px rgba(0, 0, 0, 0.85);
+}
+
+.bounty-card__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+html #game-surface .bounty-card__title,
+.bounty-card__title {
+  text-align: left;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(20px, 1.75vw, 24px);
+  line-height: 1.02;
+  color: #2c1306;
+  text-shadow: 0 1px 0 rgba(255, 248, 225, 0.85);
+}
+
+.bounty-card__tag {
+  margin-top: 2px;
+  font-family: var(--font-engraved), serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #78471a;
+  text-transform: uppercase;
+}
+
+html #game-surface .bounty-card__seal,
+.bounty-card__seal {
+  position: static;
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+  transform: rotate(-5deg);
+}
+
+/* Legible Description Banner (Fixes tiny Super Bonus Chance text) */
+html #game-surface .bounty-card__subtitle,
+.bounty-card__subtitle {
+  margin-top: 8px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: rgba(98, 54, 16, 0.13);
+  border: 1px solid rgba(110, 64, 20, 0.3);
+  text-align: left;
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10.5px, 0.92vw, 12px);
+  font-weight: 900;
+  line-height: 1.28;
+  letter-spacing: 0.05em;
+  color: #381b07;
+}
+
+/* Trigger Odds Ledger Table */
+.bounty-card__ledger-wrap {
+  margin: 8px 0 10px;
+  padding: 6px 10px 7px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  background: rgba(255, 250, 236, 0.56);
+  border: 1px solid rgba(110, 68, 26, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.bounty-card__ledger-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(110, 68, 26, 0.24);
+  font-family: var(--font-engraved), serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #7c4c1e;
+}
+
+html #game-surface .bounty-card__ledger,
+.bounty-card__ledger {
+  margin: 0;
+  gap: 4px;
+}
+
+html #game-surface .bounty-card__ledger li,
+.bounty-card__ledger li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(11.5px, 0.95vw, 13px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #3a210d;
+}
+
+.bounty-card__odds-label {
+  letter-spacing: 0.04em;
+}
+
+html #game-surface .bounty-card__ledger li b,
+.bounty-card__ledger li b {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(12px, 1vw, 13.5px);
+  font-weight: 900;
+  color: #1c0e04;
+}
+
+html #game-surface .bounty-card__ledger li.is-highlight b,
+.bounty-card__ledger li.is-highlight b {
+  color: #8c1a12;
+  background: rgba(226, 172, 74, 0.26);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Carved Wood & Brass Card Footer */
+html #game-surface .bounty-card__footer,
+.bounty-card__footer {
+  margin: auto -14px -12px;
+  padding: 8px 14px;
+  border-radius: 0 0 6px 6px;
+  border-top: 2px solid #c8943c;
+  background:
+    var(--wood-grain),
+    linear-gradient(180deg, #351e0e 0%, #1c0f06 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 228, 170, 0.22);
+}
+
+html #game-surface .bounty-card__cost-label,
+.bounty-card__cost-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #d8b26e;
+}
+
+html #game-surface .bounty-card__cost,
+.bounty-card__cost {
+  margin-top: 1px;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(22px, 2vw, 27px);
+  line-height: 1;
+  color: #ffe494;
+  text-shadow: 0 2px 0 #120802;
+}
+
+html #game-surface .bounty-card__cta,
+.bounty-card__cta {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+}
+
+/* Confirm Purchase Dialog Emblem */
+.bounty-confirm-dialog__emblem {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #103c4a 0%, #051820 74%);
+  box-shadow:
+    0 0 0 3px #e0ab4e,
+    0 0 0 5px #4e2f0e,
+    0 6px 14px rgba(50, 24, 4, 0.45);
+}
+
+/* Short Landscape Viewport Budget for Bonus Buy Grid */
+@media (max-height: 540px) and (min-width: 600px) {
+  html #game-surface .feature-harbor {
+    padding: 6px 12px;
+    gap: 4px;
+  }
+  html #game-surface .feature-harbor__kicker,
+  html #game-surface .feature-harbor__sub {
+    display: none;
+  }
+  html #game-surface .feature-harbor__title {
+    font-size: 24px;
+  }
+  .bounty-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  html #game-surface .bounty-card {
+    padding: 8px 10px 8px;
+  }
+  html #game-surface .bounty-card__porthole {
+    width: 38px;
+    height: 38px;
+  }
+  html #game-surface .bounty-card__title {
+    font-size: 16px;
+  }
+  html #game-surface .bounty-card__seal {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  html #game-surface .bounty-card__subtitle {
+    margin-top: 4px;
+    padding: 3px 6px;
+    font-size: 9.5px;
+  }
+  .bounty-card__ledger-wrap {
+    margin: 4px 0 6px;
+    padding: 4px 7px;
+  }
+  .bounty-card__ledger-head {
+    display: none;
+  }
+  html #game-surface .bounty-card__ledger li {
+    font-size: 10.5px;
+  }
+  html #game-surface .bounty-card__footer {
+    margin: auto -10px -8px;
+    padding: 5px 10px;
+  }
+  html #game-surface .bounty-card__cost {
+    font-size: 18px;
+  }
+  html #game-surface .bounty-card__cta {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. FEATURE BUY BUTTON — Riveted Wood & Brass Treasure Plaque
+   -------------------------------------------------------------------------- */
+
+.feature-buy__rivet {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4cc 0%, #d49836 52%, #4a2906 95%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+.feature-buy__rivet--tl { left: 5px; top: 5px; }
+.feature-buy__rivet--tr { right: 5px; top: 5px; }
+.feature-buy__rivet--bl { left: 5px; bottom: 5px; }
+.feature-buy__rivet--br { right: 5px; bottom: 5px; }
+
+.feature-buy__gem {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #6ff0c4;
+  box-shadow: 0 0 6px #6ff0c4;
+  vertical-align: middle;
+}
+
+.feature-buy--compact .feature-buy__rivet {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   5. OPENING MODAL — Crafted Brass Continue Plaque
+   -------------------------------------------------------------------------- */
+
+.opener-continue {
+  border-radius: 8px;
+  background:
+    var(--wood-grain),
+    linear-gradient(180deg, #4a2a12 0%, #241207 100%);
+  box-shadow:
+    0 0 0 1.5px #f3c868,
+    0 0 0 4px #381e0a,
+    0 0 0 5.5px #b9812c,
+    0 10px 24px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(255, 236, 185, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   6. REDUCED MOTION SUPPORT
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .win-celebration__rays,
+  .win-plaque__shockwave,
+  .win-plaque__mote,
+  .win-counter__sheen,
+  .win-counter--rolling .win-counter__char--digit,
+  .bonus-charter__cta-sheen {
+    animation: none !important;
+  }
+}

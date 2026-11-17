@@ -93,13 +93,23 @@ function SingleExplosion({
         }}
       />
 
-      {/* 2. Secondary fast light burst flash */}
-      <motion.div
-        initial={{ scale: 0.2, opacity: 1 }}
-        animate={{ scale: 1.8, opacity: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="absolute -inset-10 rounded-full bg-amber-200/90 blur-sm pointer-events-none"
-      />
+      {/* 2. Crisp vector star flare (replaces blurry circle flash) */}
+      <motion.svg
+        viewBox="-60 -60 120 120"
+        initial={{ scale: 0.25, opacity: 1, rotate: -18 }}
+        animate={{ scale: 1.75, opacity: 0, rotate: 22 }}
+        transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute -inset-12 w-24 h-24 pointer-events-none overflow-visible"
+      >
+        <path
+          d="M0-54 L8-10 L54 0 L8 10 L0 54 L-8 10 L-54 0 L-8-10 Z"
+          fill="#fef08a"
+        />
+        <path
+          d="M-32-32 L-4-8 L32-32 L8-4 L32 32 L4 8 L-32 32 L-8 4 Z"
+          fill="#ffffff"
+        />
+      </motion.svg>
 
       {/* 3. Flying particle shards and doubloons */}
       {particles.map((p) => {

@@ -1,0 +1,1104 @@
+/* ==========================================================================
+   Sea Raider — Hand-Crafted Reels, Paylines, Win Plaques, Multiplier & Wild Surge
+   Loaded after globals.css and scene.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. STAGE & BOARD POSITION STABILITY (1080p, 2K 2560x1440, 4K 3840x2160, Mobile)
+      Prevents any board jump during or at the end of a bonus round.
+   -------------------------------------------------------------------------- */
+
+html #game-surface .helm-backing {
+  display: none !important;
+}
+
+/* Keep .game-stage flex layout 100% invariant whether WildSurgeMeter is mounted or not */
+@media (min-width: 768px) and (min-height: 501px) {
+  html #game-surface .game-stage,
+  html #game-surface .game-stage.game-stage--wild-surge {
+    max-height: none !important;
+    min-height: 0 !important;
+    flex: 1 1 0% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: clamp(12px, 1.5vw, 24px) !important;
+  }
+
+  /* Symmetric left & right side rails so .game-reel-shell stays dead-centre (0px shift) */
+  html #game-surface .game-stage > div:first-child,
+  html #game-surface .game-stage > .game-wild-surge-rail {
+    width: clamp(108px, 9.2vw, 144px) !important;
+    min-width: clamp(108px, 9.2vw, 144px) !important;
+    max-width: clamp(108px, 9.2vw, 144px) !important;
+    flex: 0 0 clamp(108px, 9.2vw, 144px) !important;
+  }
+
+  /* Identical reel-shell sizing in base game and bonus across 1366x768, 1080p, 2K, and 4K */
+  html #game-surface .game-stage .game-reel-shell,
+  html #game-surface .game-stage.game-stage--wild-surge .game-reel-shell {
+    width: min(
+      calc(100vw - 320px),
+      calc((100dvh - 246px) * 1.667),
+      1460px
+    ) !important;
+    max-width: 1460px !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+}
+
+/* Short wide laptop viewports (e.g. 1024x576, 1200x675, 1366x640) */
+@media (min-width: 768px) and (min-height: 501px) and (max-height: 650px) {
+  html #game-surface .game-stage > div:first-child,
+  html #game-surface .game-stage > .game-wild-surge-rail {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    flex: 0 0 100px !important;
+    transform: none !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+  }
+
+  html #game-surface .game-stage .game-reel-shell,
+  html #game-surface .game-stage.game-stage--wild-surge .game-reel-shell {
+    width: min(
+      calc(100vw - 250px),
+      calc((100dvh - 210px) * 1.667)
+    ) !important;
+  }
+}
+
+/* Mobile portrait (425x812, 375x667, 320x568): reserve constant height for compact rail so board never shifts */
+@media (max-width: 767px) and (min-height: 501px) {
+  html #game-surface .game-stage,
+  html #game-surface .game-stage.game-stage--wild-surge {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  html #game-surface .game-stage .game-reel-shell,
+  html #game-surface .game-stage.game-stage--wild-surge .game-reel-shell {
+    width: min(96vw, calc((100dvh - 284px) * 1.667)) !important;
+    flex: 0 0 auto !important;
+    margin-inline: auto !important;
+  }
+
+  html #game-surface .game-wild-surge-rail-compact {
+    height: 34px !important;
+    min-height: 34px !important;
+    flex: 0 0 34px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. REEL CABINET, 5-PANE INTERIOR & LANTERN REFINEMENT
+      Exact alignment to the 5 window panes (1672x941 frame) — zero shadow bleed.
+   -------------------------------------------------------------------------- */
+
+html #game-surface .reel-cabinet {
+  padding: 0 !important;
+  aspect-ratio: 1672 / 941 !important;
+}
+
+html #game-surface .reel-window-grid {
+  display: grid;
+  grid-template-columns: 13.04fr 13.76fr 14.06fr 13.94fr 13.28fr;
+  column-gap: 1.55%;
+  padding: 0.4% 0.35% 1.1%;
+  box-sizing: border-box;
+}
+
+html #game-surface .reel-column {
+  background: transparent !important;
+  border-radius: 4px;
+}
+
+html #game-surface .reel-column--tease {
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 196, 72, 0.22) 0%,
+    rgba(245, 158, 11, 0.08) 65%,
+    transparent 100%
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 215, 115, 0.75),
+    inset 0 0 18px rgba(245, 158, 11, 0.35);
+}
+
+/* Natural warm oil-lantern glow — removes fake conic-gradient rays */
+html #game-surface .frame-lantern__rays {
+  display: none !important;
+}
+
+html #game-surface .frame-lantern__halo {
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 118, 0.42) 0%,
+    rgba(255, 154, 48, 0.16) 36%,
+    rgba(255, 120, 24, 0.04) 58%,
+    transparent 72%
+  ) !important;
+}
+
+html #game-surface .frame-lantern.is-blazing .frame-lantern__halo {
+  transform: scale(1.38) !important;
+  filter: brightness(1.28) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. SYMBOL-WIN CHOREOGRAPHY, DIMMING, & CRISP GOLD FRAME SWEEP
+   -------------------------------------------------------------------------- */
+
+html #game-surface .reel-cell {
+  transition:
+    opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Non-winning symbols dim when a payline win is on the board */
+html #game-surface .reel-cell--dimmed {
+  opacity: 0.38;
+  filter: brightness(0.55) saturate(0.72);
+  transform: scale(0.95);
+}
+
+html #game-surface .reel-cell--winning {
+  opacity: 1;
+  filter: none;
+}
+
+/* Crisp Gold Frame Sweep around winning cells */
+.win-cell-frame {
+  position: absolute;
+  inset: 3% 4%;
+  z-index: 1;
+  border-radius: 10px;
+  pointer-events: none;
+  animation: win-frame-pop 0.36s cubic-bezier(0.22, 1, 0.36, 1) var(--win-delay, 0s) both;
+}
+
+.win-cell-frame__spotlight {
+  position: absolute;
+  inset: 2%;
+  border-radius: 9px;
+  background:
+    radial-gradient(
+      ellipse at 50% 52%,
+      rgba(255, 224, 122, 0.34) 0%,
+      rgba(218, 146, 34, 0.16) 54%,
+      rgba(16, 40, 48, 0.04) 80%,
+      transparent 100%
+    );
+  box-shadow: inset 0 0 14px rgba(255, 214, 102, 0.28);
+}
+
+.win-cell-frame__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.win-cell-frame__Casing {
+  fill: none;
+  stroke: rgba(214, 158, 56, 0.55);
+  stroke-width: 2.2;
+}
+
+.win-cell-frame__sweep {
+  fill: none;
+  stroke: #fff3b8;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 5px rgba(255, 206, 84, 0.85));
+  animation:
+    win-frame-draw 0.44s cubic-bezier(0.22, 1, 0.36, 1) var(--win-delay, 0s) forwards,
+    win-frame-pulse 1.4s ease-in-out calc(var(--win-delay, 0s) + 0.44s) infinite alternate;
+}
+
+.win-cell-frame__corner {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg, #fff9dc 0%, #f0b840 60%, #8f5610 100%);
+  border: 1px solid #2b1404;
+  transform: rotate(45deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.win-cell-frame__corner--tl { left: 1px; top: 1px; }
+.win-cell-frame__corner--tr { right: 1px; top: 1px; }
+.win-cell-frame__corner--bl { left: 1px; bottom: 1px; }
+.win-cell-frame__corner--br { right: 1px; bottom: 1px; }
+
+@keyframes win-frame-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.84);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes win-frame-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes win-frame-pulse {
+  from {
+    stroke: #ffe28a;
+    opacity: 0.88;
+  }
+  to {
+    stroke: #fffdf0;
+    opacity: 1;
+  }
+}
+
+/* Symbol Win Brightness Flash & Specular Sweep */
+html #game-surface .reel-symbol-art {
+  z-index: 2;
+  max-width: clamp(78px, 7vw, 142px);
+  max-height: clamp(78px, 7vw, 142px);
+}
+
+html #game-surface .reel-symbol-img--winning {
+  filter:
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 0 12px rgba(255, 208, 92, 0.78));
+  animation: symbol-brightness-hit 0.56s ease-out var(--flash-delay, 0s) both;
+}
+
+html #game-surface .reel-symbol-img--wild {
+  filter:
+    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 10px rgba(255, 196, 68, 0.55));
+}
+
+@keyframes symbol-brightness-hit {
+  0% {
+    filter:
+      brightness(1)
+      drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85));
+  }
+  24% {
+    filter:
+      brightness(1.48)
+      contrast(1.08)
+      drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9))
+      drop-shadow(0 0 18px rgba(255, 232, 140, 0.95));
+  }
+  100% {
+    filter:
+      brightness(1.06)
+      drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85))
+      drop-shadow(0 0 11px rgba(255, 204, 84, 0.72));
+  }
+}
+
+/* Golden Skull Wild & Scatter Auras */
+.reel-wild-aura {
+  z-index: 1;
+  background: radial-gradient(
+    circle,
+    rgba(255, 206, 82, 0.28) 0%,
+    rgba(214, 132, 24, 0.1) 52%,
+    transparent 74%
+  );
+}
+
+.reel-wild-aura--winning {
+  background: radial-gradient(
+    circle,
+    rgba(255, 232, 132, 0.46) 0%,
+    rgba(235, 158, 34, 0.22) 55%,
+    transparent 78%
+  );
+}
+
+.reel-scatter-aura {
+  z-index: 1;
+  border: 1.5px solid rgba(255, 214, 102, 0.85);
+  background: radial-gradient(
+    circle,
+    rgba(255, 198, 74, 0.32) 0%,
+    rgba(245, 158, 11, 0.12) 60%,
+    transparent 78%
+  );
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.65);
+  animation: win-frame-pulse 0.75s ease-in-out infinite alternate;
+}
+
+/* Travelling highlight pulse along the payline trace */
+.payline-stream__comet {
+  stroke-dashoffset: 100;
+  animation: payline-comet-travel 1.15s linear infinite;
+}
+
+@keyframes payline-comet-travel {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. CARVED NAVAL WIN-LINE PLAQUE (.payout-plaque)
+      Replaces generic AI pill & eliminates blurry scaled text.
+   -------------------------------------------------------------------------- */
+
+html #game-surface .payout-plaque {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 235, 178, 0.12) 0%, transparent 38%, rgba(0, 0, 0, 0.45) 100%),
+    linear-gradient(180deg, #2d180b 0%, #1a0d05 55%, #110803 100%);
+  border: 1.5px solid #e2ac4a;
+  box-shadow:
+    0 0 0 2px #361c09,
+    0 0 0 3.5px #9c6b24,
+    0 8px 20px rgba(0, 0, 0, 0.88),
+    inset 0 1px 0 rgba(255, 242, 200, 0.35);
+  color: #fff5d6;
+  font-family: var(--font-engraved), Georgia, serif;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  transform: translateZ(0);
+}
+
+.payout-plaque__rivet {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #d49836 55%, #4a2806 95%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.75);
+}
+.payout-plaque__rivet--tl { left: 4px; top: 4px; }
+.payout-plaque__rivet--tr { right: 4px; top: 4px; }
+.payout-plaque__rivet--bl { left: 4px; bottom: 4px; }
+.payout-plaque__rivet--br { right: 4px; bottom: 4px; }
+
+html #game-surface .payout-plaque__line {
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #123e47 0%, #082329 100%);
+  border: 1px solid rgba(130, 232, 224, 0.55);
+  color: #b8f7f2;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+.payout-plaque__sep {
+  color: #d89b38;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.payout-plaque__symbol {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payout-plaque__icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
+}
+
+html #game-surface .payout-plaque__combo {
+  color: #fff6dc;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+html #game-surface .payout-plaque__amount {
+  color: #ffe07d;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px #000, 0 0 8px rgba(245, 178, 52, 0.45);
+}
+
+.payout-plaque__mult {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #982115 0%, #5c1009 100%);
+  border: 1px solid #f0c264;
+  color: #fff2c2;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@media (max-width: 640px) {
+  html #game-surface .payout-plaque {
+    gap: 5px;
+    padding: 3px 9px;
+    font-size: 11px;
+  }
+  html #game-surface .payout-plaque__line {
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+  .payout-plaque__icon {
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
+  }
+  html #game-surface .payout-plaque__combo {
+    font-size: 11px;
+  }
+  html #game-surface .payout-plaque__amount {
+    font-size: 11.5px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. COMPACT BRASS WILD SURGE METER (.wild-surge-meter)
+      Compact, legible 3-row pip gauge — never a tall empty dark panel.
+   -------------------------------------------------------------------------- */
+
+html #game-surface .wild-surge-meter {
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 232, 172, 0.08) 0%, transparent 28%, rgba(0, 0, 0, 0.45) 100%),
+    linear-gradient(160deg, #24140a 0%, #0d1f26 55%, #071217 100%);
+  border: 1.5px solid #d89f3c;
+  box-shadow:
+    0 0 0 2.5px #2e1808,
+    0 0 0 3.5px #8a5a1c,
+    0 10px 24px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(255, 240, 195, 0.25);
+  color: #fff2cc;
+  overflow: hidden;
+}
+
+html #game-surface .wild-surge-meter--charged {
+  border-color: #ffe28a;
+  box-shadow:
+    0 0 0 2.5px #2e1808,
+    0 0 0 3.5px #c89132,
+    0 10px 26px rgba(0, 0, 0, 0.8),
+    0 0 18px rgba(245, 182, 56, 0.32),
+    inset 0 1px 0 rgba(255, 244, 205, 0.35);
+}
+
+.wild-surge-meter__rivet {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #d49836 52%, #4a2806 95%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+.wild-surge-meter__rivet--tl { left: 4px; top: 4px; }
+.wild-surge-meter__rivet--tr { right: 4px; top: 4px; }
+.wild-surge-meter__rivet--bl { left: 4px; bottom: 4px; }
+.wild-surge-meter__rivet--br { right: 4px; bottom: 4px; }
+
+/* Vertical orientation (Desktop right rail): Bespoke 494x1329 Pirate Skull & Cutlasses Gauge Asset */
+html #game-surface .wild-surge-meter.wild-surge-meter--vertical {
+  width: 126px !important;
+  aspect-ratio: 494 / 1329 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.88));
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: visible !important;
+}
+
+html #game-surface .wild-surge-meter--charged.wild-surge-meter--vertical {
+  filter:
+    drop-shadow(0 12px 24px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 18px rgba(245, 182, 56, 0.45));
+}
+
+.wild-surge-meter__art-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+html #game-surface .wild-surge-meter--vertical .wild-surge-meter__chamber {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 68px 23px 58px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__chamber {
+  display: contents;
+}
+
+html #game-surface .wild-surge-meter--vertical .wild-surge-meter__heading {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  text-align: center !important;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(216, 159, 60, 0.28);
+}
+
+.wild-surge-meter__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.wild-surge-meter__skull {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+html #game-surface .wild-surge-meter__title {
+  font-family: var(--font-engraved), serif;
+  font-size: 8.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.05 !important;
+  color: #ffe08a !important;
+  text-shadow: 0 1px 2px #000 !important;
+  white-space: nowrap !important;
+}
+
+html #game-surface .wild-surge-meter__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  color: #fff9e6 !important;
+}
+
+html #game-surface .wild-surge-meter__count small {
+  display: inline !important;
+  margin: 0 !important;
+  font-family: var(--font-engraved), serif;
+  font-size: 7px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.1em !important;
+  color: #9be7e2 !important;
+}
+
+html #game-surface .wild-surge-meter--vertical .wild-surge-meter__track {
+  display: flex !important;
+  flex-direction: column-reverse !important;
+  justify-content: center !important;
+  flex: 1 1 auto !important;
+  gap: 7px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 2px 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html #game-surface .wild-surge-meter__segment {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  flex: none !important;
+  padding: 0 5px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(218, 165, 74, 0.42) !important;
+  background: linear-gradient(180deg, rgba(11, 24, 30, 0.92) 0%, rgba(6, 15, 19, 0.96) 100%) !important;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+  overflow: hidden !important;
+}
+
+html #game-surface .wild-surge-meter__segment.is-filling {
+  border-color: rgba(110, 232, 224, 0.55) !important;
+}
+
+html #game-surface .wild-surge-meter__segment.is-charged {
+  border-color: #ffe694 !important;
+  box-shadow:
+    0 0 8px rgba(245, 184, 56, 0.45),
+    inset 0 1px 0 rgba(255, 250, 220, 0.5) !important;
+}
+
+html #game-surface .wild-surge-meter__fill {
+  position: absolute !important;
+  inset: 0 !important;
+  transform-origin: left center !important;
+  background: linear-gradient(
+    90deg,
+    rgba(21, 118, 126, 0.72) 0%,
+    rgba(56, 206, 198, 0.78) 55%,
+    rgba(242, 184, 64, 0.88) 100%
+  ) !important;
+  box-shadow: none !important;
+}
+
+html #game-surface .wild-surge-meter__segment.is-charged .wild-surge-meter__fill {
+  background: linear-gradient(
+    90deg,
+    #9e600e 0%,
+    #d89424 50%,
+    #f2bc4a 100%
+  ) !important;
+}
+
+.wild-surge-meter__row-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+}
+
+.wild-surge-meter__row-label {
+  font-family: var(--font-engraved), serif;
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #f3d796;
+  text-shadow: 0 1px 2px #000;
+}
+
+.wild-surge-meter__pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+}
+
+.wild-surge-meter__pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(12, 24, 30, 0.9);
+  border: 1px solid rgba(214, 168, 86, 0.42);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.85);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.wild-surge-meter__pip.is-lit {
+  background: radial-gradient(circle at 35% 35%, #fffef2 0%, #ffd866 55%, #b87314 100%);
+  border-color: #fff4c2;
+  box-shadow: 0 0 5px rgba(255, 208, 84, 0.9);
+  transform: scale(1.12);
+}
+
+.wild-surge-meter__row-stat {
+  font-family: var(--font-engraved), serif;
+  font-size: 7px;
+  font-weight: 900;
+  color: #d9ece9;
+  text-shadow: 0 1px 2px #000;
+}
+
+.wild-surge-meter__segment.is-charged .wild-surge-meter__row-stat {
+  color: #fff8d6;
+}
+
+html #game-surface .wild-surge-meter--vertical .wild-surge-meter__foot {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2px !important;
+  padding-top: 3px;
+  border-top: 1px solid rgba(216, 159, 60, 0.2);
+  font-family: var(--font-engraved), serif;
+  font-size: 6.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  color: #c9d9d5 !important;
+}
+
+.wild-surge-meter__foot-rows {
+  color: #ffe08a;
+}
+
+/* Horizontal orientation (Mobile & compact screens) */
+html #game-surface .wild-surge-meter.wild-surge-meter--horizontal {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: min(94vw, 410px) !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 3px 10px !important;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__heading {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__track {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__segment {
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 0 4px !important;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__pips {
+  display: none !important;
+}
+
+html #game-surface .wild-surge-meter--horizontal .wild-surge-meter__foot {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 1px !important;
+  font-size: 6.5px !important;
+}
+
+/* Wild Surge Finale Announcement Card */
+html #game-surface .wild-surge-announcement__card {
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 236, 175, 0.12) 0%, transparent 28%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(160deg, #28160a 0%, #0d2229 52%, #081116 100%);
+  border: 2px solid #f0c264;
+  box-shadow:
+    0 0 0 4px #2e1808,
+    0 0 0 6px #9c6b24,
+    0 24px 60px rgba(0, 0, 0, 0.88),
+    inset 0 1px 0 rgba(255, 244, 204, 0.35);
+}
+
+.wild-surge-announcement__rivet {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #d49836 50%, #4a2806 95%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.75);
+}
+.wild-surge-announcement__rivet--tl { left: 10px; top: 10px; }
+.wild-surge-announcement__rivet--tr { right: 10px; top: 10px; }
+.wild-surge-announcement__rivet--bl { left: 10px; bottom: 10px; }
+.wild-surge-announcement__rivet--br { right: 10px; bottom: 10px; }
+
+/* --------------------------------------------------------------------------
+   6. MULTIPLIER BANNER, BONUS ROLLER & BONUS OVERLAY
+      Crisp, unblurred engraved typography consistent with the cabinet.
+   -------------------------------------------------------------------------- */
+
+html #game-surface .game-reel-shell > .game-multiplier-anchor,
+html #game-surface .game-multiplier-anchor {
+  top: clamp(2px, 1.8cqw, 10px) !important;
+  transform: translate(-50%, calc(-100% + 22%)) !important;
+  width: clamp(92px, 27cqw, 244px) !important;
+}
+
+@media (max-width: 767px) and (min-height: 501px) {
+  html #game-surface .game-reel-shell > .game-multiplier-anchor,
+  html #game-surface .game-multiplier-anchor {
+    top: clamp(2px, 2cqw, 8px) !important;
+    transform: translate(-50%, calc(-100% + 26%)) !important;
+    width: clamp(106px, 38cqw, 186px) !important;
+  }
+}
+
+@media (max-height: 500px) {
+  html #game-surface .game-reel-shell > .game-multiplier-anchor,
+  html #game-surface .game-multiplier-anchor {
+    top: 2px !important;
+    transform: translate(-50%, calc(-100% + 28%)) !important;
+    width: clamp(78px, 24cqw, 152px) !important;
+  }
+}
+
+html #game-surface .game-multiplier-banner {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1304 / 500 !important;
+  container-type: inline-size;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.88));
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+html #game-surface .game-multiplier-banner--surge {
+  filter:
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 16px rgba(245, 178, 52, 0.55));
+}
+
+html #game-surface .game-multiplier-banner__inner {
+  gap: clamp(0px, 0.8cqw, 2px);
+}
+
+html #game-surface .game-multiplier-banner__label {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(4.5px, 3.6cqw, 8.5px) !important;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.05;
+  color: #f6dfa2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.98);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html #game-surface .game-multiplier-banner__value-wrap {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+html #game-surface .game-multiplier-banner__value {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(11px, 11.2cqw, 25px) !important;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #fff8e2;
+  text-shadow:
+    0 2px 0 #1c0d04,
+    0 3px 8px rgba(0, 0, 0, 0.95);
+}
+
+html #game-surface .game-multiplier-banner__value.is-surge {
+  color: #ffe388;
+  text-shadow:
+    0 2px 0 #261104,
+    0 0 12px rgba(255, 198, 72, 0.65);
+}
+
+.game-multiplier-banner__cue-slot {
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-multiplier-banner__cue {
+  display: inline-block;
+  padding: 1.5px 6px;
+  border-radius: 3px;
+  font-family: var(--font-engraved), serif;
+  font-size: 6.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-shadow: 0 1px 1px #000;
+}
+
+.game-multiplier-banner__cue--rise {
+  background: linear-gradient(180deg, #134e48 0%, #092c29 100%);
+  border: 1px solid rgba(110, 238, 212, 0.65);
+  color: #b8ffef;
+}
+
+.game-multiplier-banner__cue--hold {
+  background: rgba(16, 10, 5, 0.82);
+  border: 1px solid rgba(218, 168, 86, 0.4);
+  color: #e6cfa0;
+}
+
+.game-multiplier-banner__cue--start {
+  background: linear-gradient(180deg, #8e2115 0%, #4f0e08 100%);
+  border: 1px solid rgba(242, 196, 104, 0.65);
+  color: #ffeab5;
+}
+
+/* Bonus Multiplier Roller Modal */
+.bonus-roller__kicker {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #321b0b 0%, #1a0d05 100%);
+  border: 1px solid #d49b38;
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.1vw, 12px);
+  font-weight: 900;
+  letter-spacing: 0.26em;
+  color: #ffe49c;
+}
+
+.bonus-roller__title {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: clamp(28px, 4.2vw, 48px);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #fff4d2;
+  text-shadow: 0 3px 0 #241004, 0 6px 18px rgba(0, 0, 0, 0.85);
+}
+
+.bonus-roller__range {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(10px, 1.1vw, 12px);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #b4e8e2;
+}
+
+.bonus-roller__value {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.bonus-roller__value.is-rolling {
+  font-size: clamp(38px, 6.2vw, 68px);
+  color: #d8f2ee;
+  text-shadow: 0 3px 0 #072229, 0 0 16px rgba(72, 218, 212, 0.45);
+}
+
+.bonus-roller__value.is-settled {
+  font-size: clamp(46px, 7.4vw, 82px);
+  color: #ffe699;
+  text-shadow: 0 4px 0 #2a1204, 0 0 22px rgba(255, 194, 68, 0.72);
+}
+
+.bonus-roller__foot {
+  font-family: var(--font-engraved), serif;
+  font-size: clamp(9.5px, 1vw, 11.5px);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(246, 226, 184, 0.78);
+}
+
+.bonus-roller__foot.is-settled {
+  color: #ffe28a;
+}
+
+/* Bonus Game Overlay Plaque */
+.bonus-game-overlay__plaque {
+  position: relative;
+  padding: 7px 20px;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 235, 178, 0.1) 0%, transparent 40%, rgba(0, 0, 0, 0.45) 100%),
+    linear-gradient(180deg, #2b170a 0%, #160b04 100%);
+  border: 1.5px solid #e0a844;
+  box-shadow:
+    0 0 0 2.5px #2e1808,
+    0 0 0 4px #8c5c1e,
+    0 10px 26px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 240, 195, 0.3);
+}
+
+.bonus-game-overlay__rivet {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff4c8 0%, #d49836 52%, #4a2806 95%);
+}
+.bonus-game-overlay__rivet--tl { left: 5px; top: 5px; }
+.bonus-game-overlay__rivet--tr { right: 5px; top: 5px; }
+.bonus-game-overlay__rivet--bl { left: 5px; bottom: 5px; }
+.bonus-game-overlay__rivet--br { right: 5px; bottom: 5px; }
+
+.bonus-game-overlay__label {
+  font-family: var(--font-engraved), serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #e8c682;
+}
+
+.bonus-game-overlay__value {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: 18px;
+  color: #fff7df;
+}
+
+.bonus-game-overlay__retrigger {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffe694 0%, #d89624 100%);
+  color: #1f0e03;
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.bonus-game-overlay__mult {
+  font-family: var(--font-pirate), Georgia, serif;
+  font-size: 18px;
+  color: #ffe07d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .win-cell-frame,
+  .win-cell-frame__sweep,
+  .payline-stream__comet,
+  html #game-surface .reel-symbol-img--winning {
+    animation: none !important;
+  }
+}

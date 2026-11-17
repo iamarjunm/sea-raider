@@ -228,22 +228,22 @@
   min-height: 92px;
   border-radius: 20px;
   background:
-    linear-gradient(180deg, rgba(255, 214, 140, .14), transparent 26%, transparent 70%, rgba(0, 0, 0, .4)),
-    repeating-linear-gradient(180deg, transparent 0 21px, rgba(0, 0, 0, .42) 21px 22.5px, rgba(255, 200, 140, .06) 22.5px 23.5px),
+    linear-gradient(180deg, rgba(255, 214, 140, .04), transparent 22%, transparent 70%, rgba(0, 0, 0, .45)),
+    repeating-linear-gradient(180deg, transparent 0 21px, rgba(0, 0, 0, .32) 21px 22.5px, transparent 22.5px 23.5px),
     var(--wood-grain),
-    linear-gradient(180deg, #55331a, #3a2210 55%, #26150a);
+    linear-gradient(180deg, #442813, #2f1b0c 55%, #1f0f06);
   background-size: auto, auto, 400px 120px, auto;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, .75), inset 0 2px 1px rgba(255, 220, 160, .18), inset 0 -12px 22px rgba(0, 0, 0, .45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -10px 20px rgba(0, 0, 0, .5);
 }
 .game-console::before {
   content: ''; position: absolute; inset: -3px; z-index: -1; border-radius: 23px; padding: 3px; pointer-events: none;
-  background: linear-gradient(180deg, #fff0bf, #d6a04a 30%, #7a4c15 55%, #e9b85b 80%, #8a5a1c);
+  background: linear-gradient(180deg, #7c5525, #543714 30%, #2e1c0c 60%, #4f3312 90%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
 }
 .console-rivet {
   position: absolute; width: 9px; height: 9px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, #fff6d0, #d9a144 45%, #6a4210 85%);
+  background: radial-gradient(circle at 35% 30%, #9e6f28, #5a3712 55%, #281405 90%);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .7);
 }
 .console-rivet--tl { left: 9px; top: 9px; } .console-rivet--tr { right: 9px; top: 9px; }
@@ -251,26 +251,26 @@
 
 .console-left { width: 100%; }
 .console-right { justify-self: end !important; width: fit-content; max-width: 100%; }
-.console-nav { padding-right: 10px; border-right: 1px solid rgba(231, 190, 111, .25); }
+.console-nav { padding-right: 10px; border-right: 1px solid rgba(160, 115, 60, .2); }
 
 .console-wallet, .console-win {
   border-radius: 12px;
-  background: linear-gradient(180deg, #120a05, #1f140b);
-  border: 1px solid rgba(255, 200, 120, .28);
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 1px 0 rgba(255, 220, 160, .14);
+  background: linear-gradient(180deg, #100a06, #180f08);
+  border: 1px solid rgba(145, 102, 52, .24);
+  box-shadow: inset 0 2px 7px rgba(0, 0, 0, .85);
 }
 .console-wallet { flex: 1 1 300px; max-width: 340px; padding: 7px 14px 6px; }
-.console-bet-line { margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(226, 189, 119, .16); }
-.console-label { font-family: var(--font-engraved), serif; color: #d6af68; font-size: 9.5px; font-weight: 900; letter-spacing: .16em; line-height: 1.15; text-transform: uppercase; }
-.console-balance { color: #f6ead0; font-size: 19px; line-height: 1; font-weight: 800; letter-spacing: .01em; }
-.console-play-amount { color: #ffd77c; font-size: 21px; line-height: 1; font-weight: 900; min-width: 4.2em; text-align: center; }
+.console-bet-line { margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(150, 110, 55, .16); }
+.console-label { font-family: var(--font-engraved), serif; color: #c9a460; font-size: 9.5px; font-weight: 900; letter-spacing: .16em; line-height: 1.15; text-transform: uppercase; }
+.console-balance { color: #f0e2c6; font-size: 19px; line-height: 1; font-weight: 800; letter-spacing: .01em; }
+.console-play-amount { color: #f3c76b; font-size: 21px; line-height: 1; font-weight: 900; min-width: 4.2em; text-align: center; }
 .console-cost { margin-top: 3px; color: #8aa3a2; font-size: 9px; font-weight: 700; letter-spacing: .05em; }
 
 .console-stepper {
-  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer;
-  background: radial-gradient(circle at 36% 30%, #fff3c8 0%, #e6b04c 34%, #9a6020 72%, #4e2c0a 100%);
-  color: #2b1606; font-size: 18px; font-weight: 900; line-height: 1;
-  box-shadow: 0 3px 5px rgba(0, 0, 0, .6), inset 0 -2px 3px rgba(0, 0, 0, .35), inset 0 1px 1px rgba(255, 255, 255, .6);
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(165, 118, 55, .35); cursor: pointer;
+  background: radial-gradient(circle at 38% 32%, #a87632 0%, #724716 48%, #3c2007 100%);
+  color: #f0d08d; font-size: 18px; font-weight: 900; line-height: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 220, 140, .2);
   transition: transform .12s ease, filter .12s ease;
 }
 .console-stepper span { transform: translateY(-1px); }
@@ -338,61 +338,101 @@
 }
 .console-skip:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
-/* Autoplay coin beside the spin button: brass rim, dark centre, gold glyph. */
-.console-autocoin {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  flex: none; width: 54px; height: 54px; border-radius: 50%; cursor: pointer; border: 0;
+/* Autoplay button: compact, linear with curved corners, positioned on the right side */
+.console-autobtn {
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 8px; /* Linear with curved corners */
+  cursor: pointer;
+  border: 1px solid rgba(175, 128, 55, .4);
   color: #ffd98a;
-  background: radial-gradient(circle at 50% 38%, #4a2e17 0%, #1a0e05 70%);
-  box-shadow: 0 0 0 3px #d6a04a, 0 0 0 5px #5a3a12, 0 0 0 6px #f0c878, 0 5px 12px rgba(0, 0, 0, .65), inset 0 2px 3px rgba(255, 230, 170, .25);
-  transition: transform .16s cubic-bezier(.2, .9, .3, 1.4), color .16s ease, box-shadow .16s ease;
+  background: linear-gradient(180deg, #38210f 0%, #1c0e05 100%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 230, 160, .14);
+  font-family: var(--font-engraved), serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform .14s ease, color .14s ease, border-color .14s ease, filter .14s ease;
 }
-.console-autocoin__label { font-family: var(--font-engraved), serif; font-size: 8.5px; font-weight: 900; letter-spacing: .1em; line-height: 1; }
-.console-autocoin:hover:not(:disabled) { transform: translateY(-2px) rotate(-12deg); color: #fff1c4; box-shadow: 0 0 0 3px #f0c878, 0 0 0 5px #5a3a12, 0 0 0 6px #fff0bf, 0 6px 14px rgba(0, 0, 0, .65), 0 0 16px rgba(255, 200, 90, .45), inset 0 2px 3px rgba(255, 230, 170, .25); }
-.console-autocoin:active:not(:disabled) { transform: scale(.92); }
-.console-autocoin:disabled { cursor: not-allowed; opacity: .45; filter: grayscale(.5); }
-.console-autocoin--stop {
+.console-autobtn__label { font-family: var(--font-engraved), serif; font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+.console-autobtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  color: #fff1c4;
+  border-color: rgba(215, 160, 68, .6);
+  filter: brightness(1.08);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .65), inset 0 1px 0 rgba(255, 230, 160, .22);
+}
+.console-autobtn:active:not(:disabled) { transform: scale(.95); }
+.console-autobtn:disabled { cursor: not-allowed; opacity: .4; filter: grayscale(.5); }
+.console-autobtn--stop {
   color: #fff;
-  background: radial-gradient(circle at 36% 30%, #d8574a, #8c1a12 55%, #540b07 100%);
-  box-shadow: 0 0 0 3px #f0a29a, 0 0 0 5px #5a0c08, 0 5px 12px rgba(0, 0, 0, .65), 0 0 18px rgba(220, 70, 50, .5);
-  animation: autocoin-pulse 1.4s ease-in-out infinite;
+  border-color: rgba(195, 45, 30, .65);
+  background: linear-gradient(180deg, #9b2016 0%, #590c07 100%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .6), 0 0 8px rgba(190, 40, 25, .35);
+  animation: autobtn-pulse 1.4s ease-in-out infinite;
 }
-.console-autocoin--stop .console-autocoin__label { font-size: 11px; letter-spacing: 0; }
-@keyframes autocoin-pulse { 0%, 100% { box-shadow: 0 0 0 3px #f0a29a, 0 0 0 5px #5a0c08, 0 5px 12px rgba(0, 0, 0, .65), 0 0 10px rgba(220, 70, 50, .35); } 50% { box-shadow: 0 0 0 3px #f0a29a, 0 0 0 5px #5a0c08, 0 5px 12px rgba(0, 0, 0, .65), 0 0 24px rgba(240, 90, 60, .75); } }
-@media (max-width: 500px) {
-  .console-autocoin { width: 40px; height: 40px; box-shadow: 0 0 0 2px #d6a04a, 0 0 0 4px #5a3a12, 0 4px 10px rgba(0, 0, 0, .6); }
-  .console-autocoin svg { width: 12px; height: 12px; }
-  .console-autocoin__label { font-size: 7px; }
+.console-autobtn--stop .console-autobtn__label { font-size: 11px; letter-spacing: .02em; }
+@keyframes autobtn-pulse {
+  0%, 100% { box-shadow: 0 2px 5px rgba(0, 0, 0, .6), 0 0 5px rgba(190, 40, 25, .3); }
+  50% { box-shadow: 0 2px 5px rgba(0, 0, 0, .6), 0 0 11px rgba(220, 60, 45, .55); }
 }
 
-/* Win plaque: framed in brass, and on a win it fills with gold, shimmers and glows. */
+/* Fallback for circular autocoin if used elsewhere */
+.console-autocoin {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  flex: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; border: 0;
+  color: #ffd98a;
+  background: radial-gradient(circle at 50% 38%, #4a2e17 0%, #1a0e05 70%);
+  box-shadow: 0 0 0 2px #a8762e, 0 0 0 4px #4a2e0e, 0 3px 8px rgba(0, 0, 0, .65), inset 0 1px 2px rgba(255, 230, 170, .2);
+}
+.console-autocoin__label { font-family: var(--font-engraved), serif; font-size: 8px; font-weight: 900; letter-spacing: .08em; }
+
+/* Win plaque: subdued framing in dark brass, deep wood backdrop */
 .console-win {
   position: relative; overflow: hidden; flex: 0 1 240px !important; width: 240px; padding: 7px 14px 8px;
-  border: 0 !important;
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .85), 0 0 0 1.5px #b9812c, 0 0 0 3px #3a2210, 0 1px 0 3px rgba(255, 220, 160, .14);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #100a06, #180f08);
+  border: 1px solid rgba(145, 102, 52, .24) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .85);
   transition: box-shadow .35s ease, background .35s ease;
 }
-.console-win .console-label { color: #e8c27a; }
-.console-win-amount { position: relative; z-index: 1; margin-top: 2px; color: #eaf2ef; font-size: 25px; line-height: 1.05; font-weight: 900; transition: color .25s ease; }
+.console-win .console-label { color: #c9a460; }
+.console-win-amount { position: relative; z-index: 1; margin-top: 2px; color: #f0e2c6; font-size: 25px; line-height: 1.05; font-weight: 900; transition: color .25s ease; }
 .console-win--hot {
-  background: radial-gradient(ellipse at 50% 120%, rgba(255, 190, 70, .35), transparent 70%), linear-gradient(180deg, #1c1206, #2a1a08) !important;
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .7), 0 0 0 1.5px #ffe08a, 0 0 0 3px #7a4c15, 0 0 26px rgba(255, 190, 70, .55), 0 0 60px rgba(255, 170, 50, .25);
-  animation: win-plaque-glow 1.6s ease-in-out infinite;
+  background: radial-gradient(ellipse at 50% 120%, rgba(215, 150, 50, .22), transparent 70%), linear-gradient(180deg, #170f06, #221408) !important;
+  border-color: rgba(195, 140, 60, .45) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .7), 0 0 16px rgba(215, 150, 50, .28);
+  animation: win-plaque-glow 1.8s ease-in-out infinite;
 }
-.console-win--hot .console-label { color: #fff0bf; text-shadow: 0 0 8px rgba(255, 210, 120, .7); }
+.console-win--hot .console-label { color: #f6d895; text-shadow: 0 0 6px rgba(230, 175, 75, .4); }
 .console-win--hot .console-win-amount {
-  background: linear-gradient(180deg, #fffbe6 0%, #ffe08a 45%, #f2a93b 100%);
+  background: linear-gradient(180deg, #fff7d6 0%, #f0c868 45%, #c8882b 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 1px 0 #3a1f06) drop-shadow(0 0 10px rgba(255, 196, 70, .65));
+  filter: drop-shadow(0 1px 0 #2a1505) drop-shadow(0 0 8px rgba(235, 175, 65, .45));
 }
 .console-win--hot::before {
   content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 246, 210, .45) 48%, transparent 64%);
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 235, 180, .22) 50%, transparent 65%);
   transform: translateX(-120%);
-  animation: win-plaque-sheen 2.2s ease-in-out infinite;
+  animation: win-plaque-sheen 3s ease-in-out infinite;
 }
 .console-win--counting .console-win-amount { animation: win-tick .14s ease-in-out infinite alternate; }
-@keyframes win-plaque-glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
+@keyframes win-plaque-glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.08); } }
+@keyframes win-plaque-sheen { 0%, 40% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes win-tick { to { transform: scale(1.05); } }
+
+.captain-scatter-figure {
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, .75)) drop-shadow(0 0 30px rgba(255, 180, 70, .25));
+}
 @keyframes win-plaque-sheen { 0%, 40% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @keyframes win-tick { to { transform: scale(1.06); } }
 
@@ -983,6 +1023,7 @@
   html #game-surface .console-win { padding: 5px 12px 6px; }
   html #game-surface .console-stepper { width: 25px; height: 25px; font-size: 16px; }
   html #game-surface .console-icon-button { width: 34px; height: 34px; }
+  html #game-surface .console-autobtn { height: 28px; padding: 0 9px; font-size: 9px; }
   html #game-surface .console-autocoin { width: 46px; height: 46px; }
   html #game-surface .game-stage > div:first-child { transform: translateY(-50%) scale(.8); }
 }
@@ -1012,6 +1053,8 @@
   html #game-surface .console-auto, html #game-surface .console-stop { height: 28px; min-width: 50px; padding: 0 8px; font-size: 8.5px; }
   html #game-surface .console-nav { padding-right: 6px; }
   html #game-surface .console-center { min-width: 0; gap: 8px; }
+  html #game-surface .console-autobtn { height: 25px; padding: 0 7px; font-size: 8px; gap: 3px; }
+  html #game-surface .console-autobtn svg { width: 10px; height: 10px; }
   html #game-surface .console-autocoin { width: 38px; height: 38px; }
   html #game-surface .console-autocoin__label { font-size: 6.5px; }
   html #game-surface .console-autocoin svg { width: 11px; height: 11px; }
@@ -1044,6 +1087,8 @@
   html #game-surface .console-stepper { width: 15px; height: 15px; font-size: 11px; }
   html #game-surface .console-win-amount { font-size: 11px; }
   html #game-surface .console-icon-button { width: 22px; height: 22px; }
+  html #game-surface .console-autobtn { height: 22px; padding: 0 5px; font-size: 7px; gap: 2px; border-radius: 5px; }
+  html #game-surface .console-autobtn svg { width: 8px; height: 8px; }
   html #game-surface .console-autocoin { width: 26px; height: 26px; box-shadow: 0 0 0 1.5px #d6a04a, 0 3px 6px rgba(0,0,0,.6); }
   html #game-surface .console-autocoin__label { display: none; }
   html #game-surface .console-autocoin svg { width: 10px; height: 10px; }
@@ -1071,7 +1116,7 @@
   html #game-surface .console-nav { display: flex; grid-area: nav; justify-self: start; padding-right: 0; border-right: 0; gap: 6px; }
   html #game-surface .console-wallet { grid-area: wallet; max-width: none; padding: 6px 9px 5px; }
   html #game-surface .console-win { grid-area: win; width: auto; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center; }
-  html #game-surface .console-center { grid-area: spin; min-width: 0; justify-self: center; gap: 12px; padding-left: 52px; }
+  html #game-surface .console-center { grid-area: spin; min-width: 0; justify-self: center; gap: 12px; padding-left: 0; }
   html #game-surface .console-actions { grid-area: actions; justify-self: end; gap: 6px; }
   html #game-surface .console-spin { width: 72px; height: 72px; margin-block: -4px -2px; }
   html #game-surface .console-spin-label { font-size: 17px; }
@@ -1083,6 +1128,7 @@
   html #game-surface .console-win-amount { font-size: 22px; }
   html #game-surface .console-icon-button { width: 36px; height: 36px; border-width: 2px; }
   html #game-surface .console-icon-button svg { width: 16px; height: 16px; }
+  html #game-surface .console-autobtn { height: 34px; padding: 0 10px; font-size: 10px; }
   html #game-surface .console-auto, html #game-surface .console-stop { height: 36px; min-width: 58px; font-size: 10px; }
   html #game-surface .console-rivet { display: none; }
 }
@@ -1092,7 +1138,7 @@
 }
 @media (max-width: 360px) and (min-height: 501px) {
   html #game-surface .game-console { grid-template-areas: 'wallet wallet wallet wallet win win' 'nav nav spin spin actions actions'; }
-  html #game-surface .console-center { padding-left: 46px; gap: 8px; }
+  html #game-surface .console-center { padding-left: 0; gap: 8px; }
   html #game-surface .console-bet-line .console-label { font-size: 7px; letter-spacing: .04em; }
   html #game-surface .console-bet-line > div { gap: 4px; }
   html #game-surface .console-balance { font-size: 13px; }
@@ -1100,6 +1146,7 @@
   html #game-surface .console-win-amount { font-size: 19px; }
   html #game-surface .console-stepper { width: 21px; height: 21px; }
   html #game-surface .console-icon-button { width: 32px; height: 32px; }
+  html #game-surface .console-autobtn { height: 30px; padding: 0 8px; font-size: 9px; }
   html #game-surface .console-auto, html #game-surface .console-stop { min-width: 48px; }
   html #game-surface .console-spin { width: 64px; height: 64px; }
 }

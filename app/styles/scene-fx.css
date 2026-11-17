@@ -1,0 +1,567 @@
+/* ==========================================================================
+   scene-fx.css — Hand-crafted scene, lantern, character & scatter-reveal FX
+   Loaded after scene.css and globals.css
+   ========================================================================== */
+
+/* ---------- 1. Top frame helm cutout bridge ----------
+   frame-no-wheel.webp has two rectangular slots (x: 41.5..45% & 55..58.5%,
+   y: 10.5..13.9%) where the horizontal gold bar was erased around the wheel.
+   Bridge those slots with sculpted gold molding while keeping the dark wheel
+   well strictly inside the central wheel ring. */
+html #game-surface .helm-backing {
+  left: 41.3%;
+  top: 10.45%;
+  width: 17.4%;
+  height: 3.55%;
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    #fff099 0%,
+    #f5a019 24%,
+    #bf6002 56%,
+    #8f4200 80%,
+    #df860b 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 210, 0.85),
+    inset 0 -1px 1px rgba(60, 24, 0, 0.75),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+html #game-surface .helm-backing::before {
+  content: '';
+  position: absolute;
+  left: 20.5%;
+  right: 20.5%;
+  top: -88%;
+  height: 195%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    #3d2613 0%,
+    #261509 64%,
+    #160b04 100%
+  );
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
+}
+
+/* ---------- 2. Believable Frame Lanterns ----------
+   Replaces flat radial bursts and spinning conic sun-rays with:
+   - .frame-lantern__core: warm flickering oil-wick core inside the glass
+   - .frame-lantern__halo: natural multi-stop additive screen falloff
+   - .frame-lantern__rays: warm directional light cast onto the nearby brass frame */
+html #game-surface .frame-lantern {
+  position: absolute;
+  top: 41.4%;
+  width: 14%;
+  aspect-ratio: 1;
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+html #game-surface .frame-lantern--left { left: 5.58%; }
+html #game-surface .frame-lantern--right { left: 94.42%; }
+
+html #game-surface .frame-lantern__core {
+  inset: 34% 39% 35% 39%;
+  border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(
+    ellipse 52% 64% at 50% 48%,
+    rgba(255, 254, 242, 0.98) 0%,
+    rgba(255, 228, 148, 0.82) 34%,
+    rgba(255, 168, 56, 0.36) 66%,
+    transparent 100%
+  );
+  animation: lantern-core-organic 2.35s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+html #game-surface .frame-lantern__halo {
+  inset: -6%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse 48% 54% at 50% 50%,
+    rgba(255, 214, 124, 0.42) 0%,
+    rgba(255, 170, 66, 0.22) 25%,
+    rgba(255, 128, 32, 0.085) 50%,
+    rgba(255, 96, 16, 0.024) 72%,
+    transparent 88%
+  );
+  animation: lantern-halo-organic 2.35s ease-in-out infinite;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  will-change: transform, opacity;
+}
+
+/* Repurpose __rays from conic sun-bursts into subtle warm bounce light on the adjacent frame column */
+html #game-surface .frame-lantern__rays {
+  inset: -16% -36% -22% 14%;
+  border-radius: 50%;
+  opacity: 0.85;
+  mask-image: none;
+  -webkit-mask-image: none;
+  background: radial-gradient(
+    ellipse 56% 68% at 62% 50%,
+    rgba(255, 192, 86, 0.22) 0%,
+    rgba(255, 144, 42, 0.095) 44%,
+    transparent 76%
+  );
+  animation: lantern-cast-organic 2.35s ease-in-out infinite;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+html #game-surface .frame-lantern--right .frame-lantern__rays {
+  inset: -16% 14% -22% -36%;
+  background: radial-gradient(
+    ellipse 56% 68% at 38% 50%,
+    rgba(255, 192, 86, 0.22) 0%,
+    rgba(255, 144, 42, 0.095) 44%,
+    transparent 76%
+  );
+}
+
+html #game-surface .frame-lantern--right .frame-lantern__core,
+html #game-surface .frame-lantern--right .frame-lantern__halo,
+html #game-surface .frame-lantern--right .frame-lantern__rays {
+  animation-duration: 2.85s;
+  animation-delay: -1.15s;
+}
+
+html #game-surface .frame-lantern.is-blazing .frame-lantern__halo {
+  transform: scale(1.24);
+  filter: brightness(1.22);
+  animation-duration: 1.35s;
+}
+
+html #game-surface .frame-lantern.is-blazing .frame-lantern__core {
+  filter: brightness(1.18);
+  animation-duration: 1.35s;
+}
+
+html #game-surface .frame-lantern.is-blazing .frame-lantern__rays {
+  opacity: 1;
+  transform: scale(1.14);
+  animation: lantern-cast-organic 1.35s ease-in-out infinite;
+}
+
+html #game-surface .frame-lantern.is-tense .frame-lantern__halo {
+  transform: scale(1.14);
+  animation-duration: 1.5s;
+}
+
+@keyframes lantern-core-organic {
+  0%   { opacity: 0.88; transform: scale(1, 1) translateY(0); }
+  9%   { opacity: 0.97; transform: scale(1.03, 1.06) translateY(-1%); }
+  16%  { opacity: 0.79; transform: scale(0.97, 0.94) translateY(1%); }
+  27%  { opacity: 0.93; transform: scale(1.01, 1.04) translateY(-0.5%); }
+  35%  { opacity: 0.84; transform: scale(0.99, 0.97) translateY(0.5%); }
+  48%  { opacity: 1.00; transform: scale(1.04, 1.07) translateY(-1.5%); }
+  57%  { opacity: 0.81; transform: scale(0.98, 0.95) translateY(0.5%); }
+  69%  { opacity: 0.95; transform: scale(1.02, 1.05) translateY(-1%); }
+  78%  { opacity: 0.76; transform: scale(0.96, 0.93) translateY(1%); }
+  90%  { opacity: 0.94; transform: scale(1.02, 1.03) translateY(-0.5%); }
+  100% { opacity: 0.88; transform: scale(1, 1) translateY(0); }
+}
+
+@keyframes lantern-halo-organic {
+  0%   { opacity: 0.82; transform: scale(1); }
+  9%   { opacity: 0.94; transform: scale(1.025); }
+  16%  { opacity: 0.74; transform: scale(0.985); }
+  27%  { opacity: 0.89; transform: scale(1.015); }
+  35%  { opacity: 0.80; transform: scale(0.995); }
+  48%  { opacity: 0.96; transform: scale(1.035); }
+  57%  { opacity: 0.77; transform: scale(0.99); }
+  69%  { opacity: 0.91; transform: scale(1.02); }
+  78%  { opacity: 0.73; transform: scale(0.98); }
+  90%  { opacity: 0.90; transform: scale(1.015); }
+  100% { opacity: 0.82; transform: scale(1); }
+}
+
+@keyframes lantern-cast-organic {
+  0%, 100% { opacity: 0.78; transform: scale(1); }
+  27%      { opacity: 0.88; transform: scale(1.02); }
+  48%      { opacity: 0.95; transform: scale(1.04); }
+  78%      { opacity: 0.70; transform: scale(0.98); }
+}
+
+/* ---------- 3. Backdrop & Wood Stability (zero sub-pixel shimmer) ---------- */
+html #game-surface .sea-backdrop,
+html #game-surface .sea-backdrop canvas,
+html #game-surface .sea-backdrop__still,
+html #game-surface .game-console {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* ---------- 4. Living Captain (clean transform idle, no heat filter) ---------- */
+.living-captain__body {
+  transform-box: view-box;
+  transform-origin: 543px 1448px;
+  animation: captain-breathe-clean 4.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.living-captain__ribbon {
+  transform-box: view-box;
+  transform-origin: 476px 366px;
+  animation: captain-ribbon-breeze 3.2s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes captain-breathe-clean {
+  0%, 100% { transform: rotate(-0.35deg) scale(1, 1) translateY(0); }
+  50%      { transform: rotate(0.45deg) scale(1.004, 1.01) translateY(-3px); }
+}
+
+@keyframes captain-ribbon-breeze {
+  0%   { transform: rotate(-1.8deg) translateY(1px); }
+  50%  { transform: rotate(1.2deg) translateY(-2px); }
+  100% { transform: rotate(2.4deg) translateY(-3px); }
+}
+
+/* ---------- 5. Swashbuckler Rig & Scatter-Reveal Sequence ----------
+   Crafted 1.62s sequence for scatter reveal:
+   - 0.00s..0.24s: Entry + Anticipation crouch & lean-back (arm coils overhead)
+   - 0.24s..0.42s: Explosive lunge along upward motion arc + downward cutlass slash
+   - 0.42s..0.50s: ~80ms Hit-Stop freeze on impact + crisp SVG arc trail & flying shards
+   - 0.50s..1.05s: Follow-through overshoot & poised recovery while Scatter erupts
+   - 1.05s..1.62s: Push-off recovery & agile leap exit off-stage */
+
+html #game-surface .captain-scatter-reveal.animate-captain-reveal {
+  transform-origin: 55% 90%;
+  animation: scatter-pirate-sequence 2.45s both;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.78));
+  will-change: transform, opacity;
+}
+
+html #game-surface .captain-scatter-figure {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.65));
+}
+
+@keyframes scatter-pirate-sequence {
+  0% {
+    opacity: 0;
+    transform: translate3d(-52%, 16%, 0) scale(0.84, 0.92) rotate(-15deg);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Anticipation: plant boots, crouch & lean back */
+  11% {
+    opacity: 1;
+    transform: translate3d(-12%, 7%, 0) scale(0.95, 0.87) rotate(-10deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  16% {
+    opacity: 1;
+    transform: translate3d(-16%, 9%, 0) scale(0.92, 0.84) rotate(-13deg);
+    animation-timing-function: cubic-bezier(0.68, 0, 0.92, 0.38);
+  }
+  /* Lunge in along upward motion arc into the strike */
+  26% {
+    opacity: 1;
+    transform: translate3d(11%, -6%, 0) scale(1.06, 0.96) rotate(7deg);
+    animation-timing-function: steps(1, end);
+  }
+  /* ~80ms Hit-Stop freeze (26% -> 31% of 1.62s = 81ms) */
+  31% {
+    opacity: 1;
+    transform: translate3d(11.5%, -6%, 0) scale(1.06, 0.96) rotate(7.2deg);
+    animation-timing-function: cubic-bezier(0.22, 1.38, 0.36, 1);
+  }
+  /* Overshoot recovery into poised en-garde stance */
+  46% {
+    opacity: 1;
+    transform: translate3d(2%, -1%, 0) scale(0.99, 1.02) rotate(-2deg);
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(0%, 0%, 0) scale(1, 1) rotate(0deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.4);
+  }
+  /* Push-off crouch before exit leap */
+  78% {
+    opacity: 1;
+    transform: translate3d(-5%, 4%, 0) scale(0.95, 0.91) rotate(-6deg);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.88, 0.35);
+  }
+  /* Agile exit leap off-stage left */
+  92% {
+    opacity: 0.85;
+    transform: translate3d(-44%, -2%, 0) scale(0.88, 1.03) rotate(-14deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-68%, 14%, 0) scale(0.82, 0.94) rotate(-20deg);
+  }
+}
+
+/* Articulated body, arm, crisp slash trail & shards inside Swashbuckler */
+.swashbuckler__body {
+  transform-box: view-box;
+  transform-origin: 720px 1330px;
+  animation: swash-body-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+  will-change: transform;
+}
+
+.swashbuckler__arm {
+  transform-box: view-box;
+  transform-origin: 560px 585px;
+  animation: swash-arm-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+  will-change: transform;
+}
+
+.swashbuckler__trail {
+  opacity: 0;
+  mix-blend-mode: screen;
+  animation: swash-trail-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+  will-change: opacity;
+}
+
+.swashbuckler__trail-edge {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: swash-edge-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+}
+
+.swashbuckler__trail-edge--inner {
+  animation-delay: calc(var(--swash-delay) + 0.02s);
+}
+
+.swashbuckler__spark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: swash-spark-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+}
+
+.swashbuckler__shard {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: swash-shard-crafted var(--swash-cycle) var(--swash-delay) both;
+  animation-iteration-count: var(--swash-count);
+}
+
+@keyframes swash-body-crafted {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1, 1) rotate(0deg);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Anticipation crouch & lean-back */
+  16% {
+    transform: translate3d(-24px, 18px, 0) scale(1.03, 0.93) rotate(-6deg);
+    animation-timing-function: cubic-bezier(0.68, 0, 0.92, 0.35);
+  }
+  /* Explosive lunge into slash */
+  25% {
+    transform: translate3d(44px, -14px, 0) scale(0.97, 1.04) rotate(6.5deg);
+    animation-timing-function: steps(1, end);
+  }
+  /* ~80ms Hit-Stop freeze */
+  30.5% {
+    transform: translate3d(46px, -14px, 0) scale(0.97, 1.04) rotate(6.8deg);
+    animation-timing-function: cubic-bezier(0.22, 1.35, 0.36, 1);
+  }
+  /* Follow-through & overshoot settle */
+  48% {
+    transform: translate3d(10px, 4px, 0) scale(1.01, 0.99) rotate(-1.2deg);
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  72%, 100% {
+    transform: translate3d(0, 0, 0) scale(1, 1) rotate(0deg);
+  }
+}
+
+@keyframes swash-arm-crafted {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Wind-up overhead during crouch */
+  13% {
+    transform: rotate(98deg);
+  }
+  16% {
+    transform: rotate(106deg);
+    animation-timing-function: cubic-bezier(0.74, 0, 0.94, 0.38);
+  }
+  /* Fast downward slash */
+  25% {
+    transform: rotate(-32deg);
+    animation-timing-function: steps(1, end);
+  }
+  /* ~80ms Hit-Stop freeze at impact */
+  30.5% {
+    transform: rotate(-32deg);
+    animation-timing-function: cubic-bezier(0.18, 0.88, 0.32, 1.28);
+  }
+  /* Slight follow-through dip then springy overshoot recovery */
+  35% {
+    transform: rotate(-38deg);
+    animation-timing-function: cubic-bezier(0.22, 1.38, 0.36, 1);
+  }
+  52% {
+    transform: rotate(7deg);
+    animation-timing-function: ease-out;
+  }
+  68% {
+    transform: rotate(-2.5deg);
+  }
+  84%, 100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes swash-trail-crafted {
+  0%, 17% { opacity: 0; }
+  21%     { opacity: 1; }
+  /* Hold bright across the 80ms hit-stop */
+  31%     { opacity: 0.96; }
+  44%, 100% { opacity: 0; }
+}
+
+@keyframes swash-edge-crafted {
+  0%, 16%   { stroke-dashoffset: 1; }
+  25%, 100% { stroke-dashoffset: 0; }
+}
+
+@keyframes swash-spark-crafted {
+  0%, 23% {
+    opacity: 0;
+    transform: scale(0.15) rotate(-15deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.25) rotate(8deg);
+  }
+  /* Hold through hit-stop */
+  31% {
+    opacity: 1;
+    transform: scale(1.38) rotate(16deg);
+  }
+  46%, 100% {
+    opacity: 0;
+    transform: scale(0.25) rotate(42deg);
+  }
+}
+
+@keyframes swash-shard-crafted {
+  0%, 24% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--shard-rot, 0deg)) scale(0.3);
+  }
+  26% {
+    opacity: 1;
+    transform: translate3d(calc(var(--shard-dx, 0px) * 0.25), calc(var(--shard-dy, 0px) * 0.25), 0) rotate(var(--shard-rot, 0deg)) scale(1.1);
+  }
+  /* Hit-stop hold */
+  31% {
+    opacity: 1;
+    transform: translate3d(calc(var(--shard-dx, 0px) * 0.35), calc(var(--shard-dy, 0px) * 0.35), 0) rotate(var(--shard-rot, 0deg)) scale(1.15);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  52%, 100% {
+    opacity: 0;
+    transform: translate3d(var(--shard-dx, 0px), var(--shard-dy, 0px), 0) rotate(var(--shard-rot, 0deg)) scale(0.15);
+  }
+}
+
+/* Synchronise ReelGrid's cross-reel slash vector & target cell impact with the 2.45s sequence */
+html #game-surface .captain-sword-slash {
+  animation: captain-slash-overlay 1.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  filter: none;
+}
+
+html #game-surface .captain-slash-trail {
+  stroke-width: 10;
+  filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.85));
+}
+
+html #game-surface .captain-strike-flare {
+  animation: captain-impact-spark 0.92s 0.58s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+html #game-surface .captain-cut-flash {
+  animation: captain-cut-flash-sync 0.92s 0.56s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+html #game-surface .captain-slice-upper {
+  animation: captain-slice-upper-sync 0.98s 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html #game-surface .captain-slice-lower {
+  animation: captain-slice-lower-sync 0.98s 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html #game-surface .captain-scatter-appearance > img {
+  animation: captain-scatter-pop-sync 0.82s cubic-bezier(0.22, 1.38, 0.36, 1) both;
+}
+
+@keyframes captain-slash-overlay {
+  0%, 18% { opacity: 0; }
+  26%, 48% { opacity: 1; }
+  72%, 100% { opacity: 0; }
+}
+
+@keyframes captain-impact-spark {
+  0%   { opacity: 0; transform: scale(0.15) rotate(-12deg); }
+  14%  { opacity: 1; transform: scale(1.18) rotate(0deg); }
+  /* ~80ms hit-stop hold */
+  28%  { opacity: 1; transform: scale(1.25) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1.65) rotate(28deg); }
+}
+
+@keyframes captain-cut-flash-sync {
+  0%   { opacity: 0; transform: rotate(-42deg) scaleX(0.15); }
+  16%  { opacity: 1; transform: rotate(-42deg) scaleX(1.2); }
+  /* ~80ms hit-stop hold */
+  30%  { opacity: 1; transform: rotate(-42deg) scaleX(1.24); }
+  100% { opacity: 0; transform: rotate(-42deg) scaleX(1.35); }
+}
+
+@keyframes captain-slice-upper-sync {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+  /* Hit-stop freeze on cut line before halves separate */
+  14%  { transform: translate3d(-1.5%, -2.5%, 0) rotate(-1.5deg); opacity: 1; }
+  58%  { transform: translate3d(-8%, -15%, 0) rotate(-10deg); opacity: 0.92; }
+  100% { transform: translate3d(-16%, -26%, 0) rotate(-16deg); opacity: 0; }
+}
+
+@keyframes captain-slice-lower-sync {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+  /* Hit-stop freeze on cut line before halves separate */
+  14%  { transform: translate3d(1.5%, 2.5%, 0) rotate(1.5deg); opacity: 1; }
+  58%  { transform: translate3d(8%, 15%, 0) rotate(10deg); opacity: 0.92; }
+  100% { transform: translate3d(16%, 26%, 0) rotate(16deg); opacity: 0; }
+}
+
+@keyframes captain-scatter-pop-sync {
+  0%   { opacity: 0; transform: scale(0.32) rotate(-16deg); filter: brightness(2.1); }
+  48%  { opacity: 1; transform: scale(1.18) rotate(5deg); filter: brightness(1.35) drop-shadow(0 0 14px rgba(255, 212, 84, 0.9)); }
+  74%  { opacity: 1; transform: scale(0.95) rotate(-2deg); filter: brightness(1.08); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: brightness(1.05) drop-shadow(0 0 8px rgba(255, 190, 44, 0.75)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html #game-surface .frame-lantern__core,
+  html #game-surface .frame-lantern__halo,
+  html #game-surface .frame-lantern__rays,
+  .living-captain__body,
+  .living-captain__ribbon,
+  .swashbuckler__body,
+  .swashbuckler__arm,
+  .swashbuckler__trail,
+  .swashbuckler__trail-edge,
+  .swashbuckler__spark,
+  .swashbuckler__shard,
+  html #game-surface .captain-scatter-reveal.animate-captain-reveal {
+    animation: none !important;
+  }
+}

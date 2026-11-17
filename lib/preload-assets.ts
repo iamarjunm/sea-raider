@@ -19,6 +19,8 @@ const GAME_IMAGES = [
   '/assets/aistudio/spin_speed_off_12664d81.webp',
   '/assets/aistudio/frame_e548f7c1.webp',
   '/assets/aistudio/sea-raider-captain-original-v1.webp',
+  '/assets/sea-raider/ui/multiplier-banner-frame.png',
+  '/assets/sea-raider/ui/wild-surge-meter-frame.png',
   '/assets/aistudio/image_5a86e7dd.webp',
   '/assets/aistudio/image_235abfa3.webp',
   '/assets/aistudio/image_80ad2505.webp',

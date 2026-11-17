@@ -42,58 +42,58 @@ void main() {
   float A = uRes.x / uRes.y;
   vec2 s = vec2(gl_FragCoord.x / uRes.x, 1.0 - gl_FragCoord.y / uRes.y);
 
-  // Ship sway: slow roll around the deck plus a gentle heave.
-  float roll = 0.0045 * sin(uTime * 0.52) + 0.0018 * sin(uTime * 1.13 + 1.3);
-  float heave = 0.0045 * sin(uTime * 0.71 + 0.4);
-  vec2 p = s - vec2(0.5, 0.62);
-  p.x *= A;
-  p = mat2(cos(roll), -sin(roll), sin(roll), cos(roll)) * p;
-  p.x /= A;
-  p /= 1.055;
-  p.y += heave;
-  s = p + vec2(0.5, 0.62);
-
+  // Keep the ship deck, wooden balustrade bars, and cargo chest rock-steady (no whole-scene roll/heave shimmer).
   vec2 uv = s;
   if (A > uImgAspect) uv.y = 0.5 + (s.y - 0.5) * (uImgAspect / A);
   else uv.x = 0.5 + (s.x - 0.5) * (A / uImgAspect);
 
-  float m = texture2D(uMask, uv).r;
+  float rawMask = texture2D(uMask, uv).r;
+  // Exclude the balustrade spindles (uv.y > 0.665) and left-deck cargo chest / barrel from wave UV warping.
+  float aboveRail = 1.0 - smoothstep(0.632, 0.664, uv.y);
+  float clearLeftCargo = 1.0 - (1.0 - smoothstep(0.195, 0.238, uv.x)) * smoothstep(0.55, 0.61, uv.y);
+  float clearRightHelm = 1.0 - smoothstep(0.835, 0.885, uv.x) * smoothstep(0.55, 0.62, uv.y);
+  float m = smoothstep(0.76, 0.96, rawMask) * aboveRail * clearLeftCargo * clearRightHelm;
+
   vec3 col;
-  if (m > 0.004) {
-    float depth = smoothstep(0.355, 0.8, uv.y);
-    float z = 1.0 / max(uv.y - 0.335, 0.012);
+  if (m > 0.005) {
+    float depth = smoothstep(0.355, 0.66, uv.y);
+    float z = 1.0 / max(uv.y - 0.335, 0.015);
     vec2 wc = vec2((uv.x - 0.5) * z * 2.2, z * 0.9);
     float t = uTime;
-    // Rough, wind-driven sea: two noise fields plus a big rolling swell and a cross-chop.
+    // Wind-driven open sea: two noise fields plus a rolling swell and cross-chop.
     float n1 = fbm(wc * 1.5 + vec2(t * 0.2, -t * 0.7));
     float n2 = fbm(wc * 2.6 + vec2(-t * 0.28, -t * 0.9) + 7.0);
     float swell = sin(wc.y * 2.4 - t * 1.9 + n1 * 3.6);
     float chop = sin(wc.x * 3.1 + wc.y * 1.7 - t * 2.6 + n2 * 4.0);
-    float roll = sin(uv.x * 11.0 - t * 0.9 + depth * 3.0) * depth;
-    vec2 off = vec2((n2 - 0.5) * 1.1 + chop * 0.25, (n1 - 0.5) * 1.2 + swell * 0.55 + roll * 0.6) * (0.003 + depth * 0.0155);
+    float seaRoll = sin(uv.x * 11.0 - t * 0.9 + depth * 3.0) * depth;
+    vec2 off = vec2((n2 - 0.5) * 1.0 + chop * 0.22, (n1 - 0.5) * 1.1 + swell * 0.5 + seaRoll * 0.5) * (0.0025 + depth * 0.012);
     off *= m * m;
+    // Never sample across mask boundaries into wooden bars, rigging, or the deck cargo box.
+    float destMask = texture2D(uMask, uv + off).r;
+    float safeDest = smoothstep(0.84, 0.98, destMask) * (1.0 - smoothstep(0.635, 0.664, uv.y + off.y));
+    off *= safeDest;
     col = texture2D(uTex, uv + off).rgb;
 
     // Swell faces darken, crests catch light.
     float crest = n1 * 0.55 + n2 * 0.45 + swell * 0.16 + chop * 0.08;
-    col *= mix(1.0, 0.84 + 0.32 * smoothstep(0.3, 0.75, crest), m);
+    col *= mix(1.0, 0.86 + 0.28 * smoothstep(0.3, 0.75, crest), m);
     float ridge = smoothstep(0.6, 0.86, crest);
     float moonPath = exp(-pow((uv.x - 0.31) / (0.035 + depth * 0.09), 2.0));
     float sunPath = exp(-pow((uv.x - 0.84) / (0.04 + depth * 0.1), 2.0));
-    vec3 glint = vec3(0.62, 0.86, 1.0) * (0.1 + moonPath * 0.65) + vec3(1.0, 0.62, 0.3) * sunPath * 0.7;
-    col += glint * ridge * m * (0.4 + depth * 0.8);
-    // Whitecaps breaking on the crests, strongest close to the hull.
+    vec3 glint = vec3(0.62, 0.86, 1.0) * (0.1 + moonPath * 0.6) + vec3(1.0, 0.62, 0.3) * sunPath * 0.65;
+    col += glint * ridge * m * (0.36 + depth * 0.72);
+    // Whitecaps breaking on the crests.
     float caps = smoothstep(0.72, 0.9, crest) * smoothstep(0.45, 0.9, noise(wc * 6.0 + vec2(0.0, -t * 1.6)));
-    col += vec3(0.82, 0.92, 0.95) * caps * m * (0.18 + depth * 0.55);
-    // Surf crashing against the ship: the painted foam surges in sets.
-    float foam = smoothstep(0.55, 0.92, (col.r + col.g + col.b) / 3.0) * depth;
+    col += vec3(0.82, 0.92, 0.95) * caps * m * (0.16 + depth * 0.48);
+    // Surf foam pulse on open water only.
+    float foam = smoothstep(0.58, 0.92, (col.r + col.g + col.b) / 3.0) * depth;
     float surge = pow(0.5 + 0.5 * sin(t * 1.3 + uv.x * 18.0 + n1 * 5.0), 3.0);
-    col += foam * (0.12 + 0.32 * surge) * m;
+    col += foam * (0.1 + 0.26 * surge) * m;
   } else {
     col = texture2D(uTex, uv).rgb;
   }
 
-  // Deck lanterns painted into the backdrop.
+  // Deck lanterns painted into the backdrop: warm core + soft natural falloff.
   vec2 aspect = vec2(uImgAspect, 1.0);
   vec2 L1 = vec2(0.1076, 0.307);
   vec2 L2 = vec2(0.9437, 0.372);
@@ -101,15 +101,15 @@ void main() {
   float f2 = flicker(uTime + 3.1, 5.0);
   float d1 = length((uv - L1) * aspect);
   float d2 = length((uv - L2) * aspect);
-  float boost = 1.0 + uWin * 0.9;
-  float core1 = exp(-d1 * d1 / 0.0011);
-  float core2 = exp(-d2 * d2 / 0.0011);
-  float halo1 = exp(-d1 * d1 / 0.02);
-  float halo2 = exp(-d2 * d2 / 0.02);
-  vec3 warm = vec3(1.0, 0.62, 0.24);
-  col *= 1.0 + (core1 * (f1 - 0.8) + core2 * (f2 - 0.8)) * 1.6 * boost;
-  col += warm * (halo1 * (0.06 + 0.12 * f1) + halo2 * (0.06 + 0.12 * f2)) * boost;
-  col += warm * (core1 * f1 + core2 * f2) * uWin * 0.35;
+  float boost = 1.0 + uWin * 0.65;
+  float core1 = exp(-d1 * d1 / 0.00085);
+  float core2 = exp(-d2 * d2 / 0.00085);
+  float halo1 = exp(-d1 * d1 / 0.016);
+  float halo2 = exp(-d2 * d2 / 0.016);
+  vec3 warm = vec3(1.0, 0.66, 0.28);
+  col *= 1.0 + (core1 * (f1 - 0.78) + core2 * (f2 - 0.78)) * 1.25 * boost;
+  col += warm * (halo1 * (0.045 + 0.085 * f1) + halo2 * (0.045 + 0.085 * f2)) * boost;
+  col += warm * (core1 * f1 + core2 * f2) * uWin * 0.22;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -197,7 +197,7 @@ export default function SeaBackdrop({ glow = 0 }: SeaBackdropProps) {
     gl.uniform1f(gl.getUniformLocation(program, 'uImgAspect'), IMAGE_ASPECT);
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) {
@@ -245,6 +245,7 @@ export default function SeaBackdrop({ glow = 0 }: SeaBackdropProps) {
         alt=""
         fill
         priority
+        quality={95}
         sizes="100vw"
         className={`sea-backdrop__still object-cover object-center transition-opacity duration-700 ${isLive ? 'opacity-0' : 'opacity-100'}`}
       />

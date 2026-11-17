@@ -30,7 +30,7 @@ BONUS_PAYOUT_SCALE = 1.0
 BONUS_START_MIN_BY_SCATTERS = {3: 1, 4: 10, 5: 20, 6: 50}
 BONUS_MULTIPLIER_MAX = 50_000
 ETHEREAL_MINIMUM_PAYOUT = 8_000.0
-UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM = 750.0
+UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM = 1_000.0
 
 
 def bonus_payout_floor(mode: str, scatter_count: int) -> float:
@@ -39,7 +39,7 @@ def bonus_payout_floor(mode: str, scatter_count: int) -> float:
     if scatter_count == 5:
         if mode == "unknown_extreme":
             return UNKNOWN_EXTREME_FIVE_SCATTER_MINIMUM
-        return {"unknown_bonus": 500.0, "super_bonus": 10.0, "pirates_chance": 25.0}.get(mode, 1_500.0)
+        return {"super_bonus": 10.0, "pirates_chance": 25.0}.get(mode, 1_500.0)
     return 0.1
 
 # payoutMultiplier uses hundredths of base bet: 100 == 1.00x
@@ -72,13 +72,13 @@ PAYLINES = [
 MODES = [
     # name, cost, max_win_x, hit_rate_target
     ("base", 1.0, 25_000, 0.55),
-    ("bonus_chance", 5.0, 25_000, 0.72),
+    ("bonus_chance", 5.0, 25_000, 0.40),
     ("super_bonus", 7.0, 25_000, 0.70),
     ("pirates_chance", 25.0, 25_000, 0.55),
     ("feature_spin", 10.0, 25_000, 0.70),
     # Every purchase awards a feature; the rare 50k row is the 6-scatter Ethereal.
     ("unknown_bonus", 250.0, 50_000, 1.00),
-    ("unknown_extreme", 500.0, 50_000, 0.45),
+    ("unknown_extreme", 500.0, 50_000, 0.15),
 ]
 
 
@@ -187,7 +187,7 @@ def diversify_line_outcomes(
     events: list[dict],
 ) -> None:
     """Add many valid line-pay amounts while preserving each Wild-multiplier group's mean."""
-    if mode == "feature_spin":
+    if mode in ("feature_spin", "unknown_extreme"):
         return
 
     source_rows = list(rows)
@@ -1085,12 +1085,18 @@ def make_bonus_spin_frames(bonus_type: str, initial_spins: int, mode: str = "bas
                     board[col][FRAME_RNG.randrange(3)] = "WILD"
             current_multiplier = min(current_multiplier + 2, 50)
         elif bonus_type == "ethereal":
-            for col in range(5):
-                if FRAME_RNG.random() < 0.6:
-                    row = next((row for row in range(3) if board[col][row] != "WILD"), None)
-                    if row is not None:
-                        board[col][row] = "WILD"
+            for col in (1, 2, 3):
+                if FRAME_RNG.random() < 0.65:
+                    row = FRAME_RNG.randrange(3)
+                    board[col][row] = "WILD"
+            if FRAME_RNG.random() < 0.35:
+                row = FRAME_RNG.randrange(3)
+                board[4][row] = "WILD"
             current_multiplier = min(current_multiplier + 5, 100)
+            # Ensure full 5-wild lines are NEVER awarded on free spin frames (reserved strictly for Wild Surge)
+            for line in PAYLINES:
+                if all(board[c][r] == "WILD" for c, r in line):
+                    board[0][line[0][1]] = "H1"
         else:
             # Curse of the High Seas: a steady 2x → 5x climb, then hold.
             current_multiplier = min(2 + len(frames), 5)
@@ -1203,6 +1209,19 @@ def build_curve(cost: float, max_win: int, hit_rate: float, mode_name: str) -> l
             (1.5, 0.30),
             (2.5, 0.20),
             (4.58, 0.10),
+        ]
+    elif mode_name == "bonus_chance":
+        # Bonus Chance (5x): reduce 1x/2x sub-cost churn; solid hits and exciting features
+        shape = [
+            (2.5, 0.20),
+            (5.0, 0.25),
+            (7.5, 0.20),
+            (10.0, 0.15),
+            (15.0, 0.10),
+            (25.0, 0.05),
+            (40.0, 0.03),
+            (80.0, 0.015),
+            (150.0, 0.005),
         ]
     elif cost <= 2:
         # base / bonus_chance — lots of small line wins
@@ -1573,11 +1592,469 @@ def inject_jackpots(
     return new_curve
 
 
+def calibrate_precise_bonus_frames(event: dict, booked_payout_x: float) -> float:
+    """Fit a non-decreasing selectable multiplier sequence closely tracking booked_payout_x."""
+    frames = event.get("bonusSpinFrames") or []
+    surge = event.get("wildSurge")
+    included_frames = list(frames)
+    if surge and surge.get("linesAwarded", 0) > 0:
+        included_frames.append(surge["frame"])
+
+    scatter_count = event["scatterCount"]
+    cap = 50_000 if scatter_count == 6 else 25_000
+    floor = bonus_payout_floor(event.get("mode", ""), scatter_count)
+    minimum_start = (
+        3 if event.get("mode") == "super_bonus" and scatter_count == 4
+        else BONUS_START_MIN_BY_SCATTERS.get(scatter_count, 1)
+    )
+    wanted_units = max(1, int(round(booked_payout_x / 0.2)))
+    floor_units = int(math.ceil(floor / 0.2 - 1e-8))
+    max_allowed = int(math.floor(cap / 0.2 + 1e-8))
+    target_units = min(max_allowed, max(floor_units, wanted_units))
+
+    dead_board = [[symbol, symbol, symbol] for symbol in LOWS]
+    single_line_board = [
+        ["L1", "L2", "L3"],
+        ["L1", "L4", "L5"],
+        ["L1", "L2", "L4"],
+        ["L2", "L3", "L5"],
+        ["L3", "L4", "L5"],
+    ]
+
+    def get_units() -> list[int]:
+        return [round(line_total(f["board"], 1.0, 1.0) / 0.2) for f in included_frames]
+
+    units_per_line = get_units()
+    if sum(units_per_line) * minimum_start > target_units:
+        for idx in range(len(frames) - 1, -1, -1):
+            if sum(units_per_line) * minimum_start <= target_units:
+                break
+            if idx == 0:
+                frames[idx]["board"] = copy.deepcopy(single_line_board)
+            else:
+                frames[idx]["board"] = copy.deepcopy(dead_board)
+                frames[idx]["retriggerSpins"] = 0
+            if surge is not None:
+                new_surge = make_wild_surge(event["bonusType"], frames, event["mode"])
+                event["wildSurge"] = new_surge
+                surge = new_surge
+            included_frames = list(frames)
+            if surge and surge.get("linesAwarded", 0) > 0:
+                included_frames.append(surge["frame"])
+            units_per_line = get_units()
+
+    active_indices = [i for i, u in enumerate(units_per_line) if u > 0]
+    if not active_indices:
+        frames[0]["board"] = copy.deepcopy(single_line_board)
+        units_per_line = get_units()
+        active_indices = [i for i, u in enumerate(units_per_line) if u > 0]
+
+    def selectable_down(value: int) -> int:
+        value = min(cap, max(minimum_start, value))
+        if value <= 10:
+            return value
+        if value < 20:
+            return max(minimum_start, 10)
+        return min(cap, max(20, (value // 10) * 10))
+
+    def next_stop(value: int) -> int:
+        if value < 10:
+            return value + 1
+        if value == 10:
+            return 20
+        return min(cap, value + 10)
+
+    is_jackpot_row = any(math.isclose(booked_payout_x, v, rel_tol=0, abs_tol=0.051) for v in (cap, 24_988.0))
+    if is_jackpot_row:
+        return calibrate_bonus_frame_multipliers(event, booked_payout_x)
+
+    base_multipliers = [int(f["multiplier"]) for f in included_frames]
+    raw_units = sum(units_per_line[i] * base_multipliers[i] for i in active_indices)
+
+    def down_sequence(scale: float) -> tuple[list[int], int]:
+        vals = []
+        prev = minimum_start
+        for v in base_multipliers:
+            r = selectable_down(int(math.floor(v * scale + 1e-9)))
+            r = max(prev, r)
+            vals.append(r)
+            prev = r
+        return vals, sum(units_per_line[i] * vals[i] for i in active_indices)
+
+    low, high = 0.0, max(1.0, target_units / max(raw_units, 1))
+    while down_sequence(high)[1] < target_units and high < 100_000:
+        high *= 2
+    for _ in range(60):
+        mid = (low + high) / 2
+        if down_sequence(mid)[1] <= target_units:
+            low = mid
+        else:
+            high = mid
+
+    multipliers, current_units = down_sequence(low)
+
+    for _ in range(2_000):
+        if current_units >= target_units and current_units >= floor_units:
+            break
+        best = None
+        for start in active_indices:
+            if multipliers[start] >= cap:
+                continue
+            adjusted = list(multipliers)
+            step_val = next_stop(adjusted[start])
+            for idx in range(start, len(adjusted)):
+                adjusted[idx] = max(adjusted[idx], step_val)
+            new_units = sum(units_per_line[i] * adjusted[i] for i in active_indices)
+            if new_units > max_allowed or new_units <= current_units:
+                continue
+            overshoot = max(0, new_units - target_units)
+            dist = abs(target_units - new_units)
+            key = (overshoot > 0 and current_units >= floor_units, dist, new_units - current_units)
+            if best is None or key < best[0]:
+                best = (key, adjusted, new_units)
+        if best is None:
+            break
+        if best[0][0]:
+            if abs(target_units - best[2]) >= abs(target_units - current_units):
+                break
+        _, multipliers, current_units = best
+        if best[2] >= target_units and current_units >= floor_units:
+            break
+
+    for idx, frame in enumerate(included_frames):
+        frame.pop("featureAwardX", None)
+        frame["multiplier"] = multipliers[idx]
+    event.pop("featureAwardX", None)
+    return current_units * 0.2
+
+
+def power_weights_for_return(
+    payouts: list[int],
+    total_weight: int,
+    target_weighted_units: int,
+    pinned_weights: dict[int, int] | None = None,
+    min_weight_floor: int = 1_000_000,
+) -> list[int]:
+    """Allocate integer weights via a power-law ladder to hit target_weighted_units with a positive floor."""
+    pinned_weights = pinned_weights or {}
+    free_indices = [i for i in range(len(payouts)) if i not in pinned_weights]
+    pinned_w_sum = sum(pinned_weights.values())
+    pinned_ret_sum = sum(pinned_weights[i] * payouts[i] for i in pinned_weights)
+    rem_weight = total_weight - pinned_w_sum
+    rem_target = target_weighted_units - pinned_ret_sum
+    p_min = min(payouts[i] for i in free_indices)
+    p_max = max(payouts[i] for i in free_indices)
+    avg_needed = rem_target / rem_weight
+    if not (p_min <= avg_needed <= p_max):
+        raise ValueError(
+            f"Target average {avg_needed / 100:.2f}x outside [{p_min / 100:.2f}x, {p_max / 100:.2f}x]"
+        )
+
+    def weights_at_alpha(alpha: float) -> list[int]:
+        raw = [
+            math.exp(-alpha * math.log(payouts[i] / p_min)) if payouts[i] > p_min else 1.0
+            for i in free_indices
+        ]
+        s = sum(raw)
+        alloc = [max(min_weight_floor, int(math.floor(rem_weight * r / s))) for r in raw]
+        drift = rem_weight - sum(alloc)
+        if drift >= 0:
+            idx_max = max(range(len(alloc)), key=alloc.__getitem__)
+            alloc[idx_max] += drift
+        else:
+            for idx in sorted(range(len(alloc)), key=alloc.__getitem__, reverse=True):
+                take = min(-drift, alloc[idx] - min_weight_floor)
+                alloc[idx] -= take
+                drift += take
+                if drift == 0:
+                    break
+        res = [0] * len(payouts)
+        for idx, val in pinned_weights.items():
+            res[idx] = val
+        for idx, val in zip(free_indices, alloc):
+            res[idx] = val
+        return res
+
+    low, high = -10.0, 25.0
+    for _ in range(80):
+        mid = (low + high) / 2
+        w = weights_at_alpha(mid)
+        ret = sum(wi * pi for wi, pi in zip(w, payouts))
+        if ret > target_weighted_units:
+            low = mid
+        else:
+            high = mid
+
+    weights = weights_at_alpha((low + high) / 2)
+    for _ in range(100_000):
+        delta = target_weighted_units - sum(wi * pi for wi, pi in zip(weights, payouts))
+        if abs(delta) <= max(1, int(target_weighted_units * 1e-11)):
+            break
+        direction = 1 if delta > 0 else -1
+        best_move = None
+        for src in free_indices:
+            if weights[src] <= min_weight_floor:
+                continue
+            for dst in free_indices:
+                if src == dst:
+                    continue
+                diff = direction * (payouts[dst] - payouts[src])
+                if 0 < diff <= abs(delta):
+                    if best_move is None or diff > best_move[0]:
+                        best_move = (diff, src, dst)
+        if best_move is None:
+            break
+        diff, src, dst = best_move
+        amt = min(weights[src] - min_weight_floor, abs(delta) // diff)
+        if amt <= 0:
+            break
+        weights[src] -= amt
+        weights[dst] += amt
+
+    return weights
+
+
+def build_structured_mode(
+    name: str, cost: float, max_win: int, mode_seed: int
+) -> tuple[list[tuple[int, int, int]], list[dict]]:
+    """Build rich, band-complete payout ladders for bonus_chance, unknown_bonus, and unknown_extreme."""
+    saved_frame_rng = FRAME_RNG.getstate()
+    FRAME_RNG.seed(mode_seed + 20261106)
+    target_units = round(TARGET_RTP * cost * 100 * TOTAL_WEIGHT)
+
+    def make_bonus_row(target_x: float, tier: str) -> tuple[int, dict]:
+        meta = board_for_outcome(name, target_x, max_win, tier)
+        meta["bonusSpinFrames"] = make_bonus_spin_frames(
+            meta["bonusType"], meta["bonusSpinsAwarded"], name
+        )
+        meta["wildSurge"] = make_wild_surge(meta["bonusType"], meta["bonusSpinFrames"], name)
+        visible = calibrate_precise_bonus_frames(meta, target_x)
+        payout = x_to_payout(visible)
+        meta["payoutX"] = round(payout / 100.0, 4)
+        return payout, meta
+
+    rows: list[tuple[int, int, int]] = []
+    events: list[dict] = []
+
+    def append_row(weight: int, payout: int, meta: dict) -> None:
+        sim_id = len(rows)
+        rows.append((sim_id, weight, payout))
+        events.append({"id": sim_id, "events": [meta], "payoutMultiplier": payout})
+
+    if name == "unknown_extreme":
+        none_meta = board_for_outcome(name, 0.0, max_win, "none")
+        none_meta["board"] = nonwinning_board(name, cost, none_meta["wildMultiplier"])
+        none_meta["payoutX"] = 0.0
+        append_row(850_000_000_000, 0, none_meta)
+
+        eth_targets = [
+            8050, 8350, 8700, 9100, 9550,
+            10500, 11800, 13500, 15800, 18500,
+            22500, 28500, 36000, 50000,
+        ]
+        eth_rows = [make_bonus_row(float(t), "ethereal") for t in eth_targets]
+        eth_weights = [
+            3_200_000_000, 2_800_000_000, 2_400_000_000, 2_000_000_000, 1_800_000_000,
+            2_000_000_000, 1_600_000_000, 1_300_000_000, 1_000_000_000, 750_000_000,
+            500_000_000, 300_000_000, 150_000_000, 200_000_000,
+        ]
+        eth_ret = sum(w * p for w, (p, _) in zip(eth_weights, eth_rows))
+
+        hid_targets = [
+            1020, 1080, 1150, 1230, 1320, 1420, 1540, 1680, 1840,
+            2050, 2300, 2600, 3000, 3500, 4100, 4800,
+            5600, 6600, 7800, 9200,
+            13500, 25000,
+        ]
+        hid_rows = [make_bonus_row(float(t), "hidden") for t in hid_targets]
+        hid_payouts = [p for p, _ in hid_rows]
+        hid_pinned = {len(hid_targets) - 2: 800_000_000, len(hid_targets) - 1: 400_000_000}
+        hid_weights = power_weights_for_return(
+            hid_payouts,
+            130_000_000_000,
+            target_units - eth_ret,
+            pinned_weights=hid_pinned,
+            min_weight_floor=50_000_000,
+        )
+        for w, (p, m) in zip(hid_weights, hid_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(eth_weights, eth_rows):
+            append_row(w, p, m)
+
+    elif name == "unknown_bonus":
+        eth_targets = [8100, 9200, 10600, 12400, 14800, 17800, 21500, 26500, 35000, 50000]
+        eth_rows = [make_bonus_row(float(t), "ethereal") for t in eth_targets]
+        eth_payouts = [p for p, _ in eth_rows]
+        eth_weights = power_weights_for_return(
+            eth_payouts,
+            1_000_000_000,
+            round(20.5 * 100 * TOTAL_WEIGHT),
+            pinned_weights={len(eth_targets) - 1: 200_000_000},
+            min_weight_floor=10_000_000,
+        )
+        eth_ret = sum(w * p for w, p in zip(eth_weights, eth_payouts))
+
+        leg_targets = [
+            1500, 1550, 1610, 1680, 1760, 1850, 1950,
+            2100, 2300, 2550, 2850, 3250, 3750, 4350,
+            5100, 6000, 7200, 8600,
+            10500, 13200, 17000,
+            21500, 25000,
+        ]
+        leg_rows = [make_bonus_row(float(t), "legend") for t in leg_targets]
+        leg_payouts = [p for p, _ in leg_rows]
+        leg_weights = power_weights_for_return(
+            leg_payouts,
+            110_000_000_000,
+            round(184.0 * 100 * TOTAL_WEIGHT),
+            pinned_weights={len(leg_targets) - 1: 250_000_000},
+            min_weight_floor=100_000_000,
+        )
+        leg_ret = sum(w * p for w, p in zip(leg_weights, leg_payouts))
+
+        cur_targets = [
+            5.8, 6.6, 7.4, 8.4, 9.4,
+            10.8, 12.4, 14.2, 16.2, 18.4,
+            21.0, 24.0, 27.4, 31.2, 35.6, 40.6, 46.2,
+            52.4, 59.4, 67.2, 76.0, 85.0,
+        ]
+        cur_rows = [make_bonus_row(float(t), "curse") for t in cur_targets]
+        cur_payouts = [p for p, _ in cur_rows]
+        cur_weights = power_weights_for_return(
+            cur_payouts,
+            520_000_000_000,
+            round(8.5 * 100 * TOTAL_WEIGHT),
+            min_weight_floor=500_000_000,
+        )
+        cur_ret = sum(w * p for w, p in zip(cur_weights, cur_payouts))
+
+        gho_targets = [
+            56, 64, 72, 82, 94,
+            108, 124, 142, 162, 186,
+            214, 246, 284, 328, 378, 436,
+            504, 580, 668, 768, 860, 950,
+        ]
+        gho_rows = [make_bonus_row(float(t), "ghost") for t in gho_targets]
+        gho_payouts = [p for p, _ in gho_rows]
+        gho_weights = power_weights_for_return(
+            gho_payouts,
+            369_000_000_000,
+            target_units - eth_ret - leg_ret - cur_ret,
+            min_weight_floor=300_000_000,
+        )
+
+        for w, (p, m) in zip(cur_weights, cur_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(gho_weights, gho_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(leg_weights, leg_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(eth_weights, eth_rows):
+            append_row(w, p, m)
+
+    elif name == "bonus_chance":
+        none_meta = board_for_outcome(name, 0.0, max_win, "none")
+        none_meta["board"] = nonwinning_board(name, cost, none_meta["wildMultiplier"])
+        none_meta["payoutX"] = 0.0
+        append_row(600_000_000_000, 0, none_meta)
+
+        leg_targets = [
+            1500, 1600, 1740, 1920, 2200, 2650, 3400, 4500, 5000, 7200, 10000, 15000, 25000
+        ]
+        leg_rows = [make_bonus_row(float(t), "legend") for t in leg_targets]
+        leg_payouts = [p for p, _ in leg_rows]
+        leg_weights = power_weights_for_return(
+            leg_payouts,
+            500_000_000,
+            round(0.905 * 100 * TOTAL_WEIGHT),
+            pinned_weights={
+                len(leg_targets) - 1: 4_000_000,
+                len(leg_targets) - 2: 600_000,
+                len(leg_targets) - 3: 1_200_000,
+                len(leg_targets) - 5: 2_500_000,
+            },
+            min_weight_floor=400_000,
+        )
+        leg_ret = sum(w * p for w, p in zip(leg_weights, leg_payouts))
+
+        gho_targets = [190, 206, 224, 244, 268, 296, 330, 370, 416, 470, 530, 600]
+        gho_rows = [make_bonus_row(float(t), "ghost") for t in gho_targets]
+        gho_payouts = [p for p, _ in gho_rows]
+        gho_weights = power_weights_for_return(
+            gho_payouts,
+            3_500_000_000,
+            round(0.882 * 100 * TOTAL_WEIGHT),
+            min_weight_floor=20_000_000,
+        )
+        gho_ret = sum(w * p for w, p in zip(gho_weights, gho_payouts))
+
+        cur_targets = [
+            18, 20, 22, 24, 26, 28, 30.6, 33.6, 37, 41, 46, 52, 59, 67, 77, 89, 104, 118, 132
+        ]
+        cur_rows = [make_bonus_row(float(t), "curse") for t in cur_targets]
+        cur_payouts = [p for p, _ in cur_rows]
+        cur_weights = power_weights_for_return(
+            cur_payouts,
+            96_000_000_000,
+            round(2.690 * 100 * TOTAL_WEIGHT),
+            min_weight_floor=100_000_000,
+        )
+        cur_ret = sum(w * p for w, p in zip(cur_weights, cur_payouts))
+
+        by_payout: dict[int, tuple[int, int, list[list[str]]]] = {}
+        for mult in (1, 2, 3):
+            cat = line_variant_catalog(name, cost, float(mult))
+            for p, boards in sorted(cat.items()):
+                if p <= x_to_payout(80.0) and p not in by_payout:
+                    by_payout[p] = (p, mult, boards[0])
+        line_unique = [by_payout[p] for p in sorted(by_payout)[:20]]
+        line_payouts = [p for p, _, _ in line_unique]
+        line_weights = power_weights_for_return(
+            line_payouts,
+            300_000_000_000,
+            target_units - leg_ret - gho_ret - cur_ret,
+            min_weight_floor=5_000_000,
+        )
+
+        for w, (p, mult, board) in zip(line_weights, line_unique):
+            meta = board_for_outcome(name, p / 100.0, max_win, "none")
+            meta["board"] = copy.deepcopy(board)
+            meta["wildMultiplier"] = mult
+            meta["result"] = "small_win" if p < 100 else "line_win"
+            meta["payoutX"] = round(p / 100.0, 4)
+            append_row(w, p, meta)
+        for w, (p, m) in zip(cur_weights, cur_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(gho_weights, gho_rows):
+            append_row(w, p, m)
+        for w, (p, m) in zip(leg_weights, leg_rows):
+            append_row(w, p, m)
+
+        # Restore and advance FRAME_RNG by the exact 10 calls of legacy bonus_chance
+        # so subsequent modes (super_bonus, pirates_chance, feature_spin) are unaffected.
+        FRAME_RNG.setstate(saved_frame_rng)
+        for bt, sp in [("legend", 15)] * 4 + [("ghost", 12)] * 2 + [("curse", 10)] * 4:
+            f = make_bonus_spin_frames(bt, sp, name)
+            make_wild_surge(bt, f, name)
+
+    return rows, events
+
+
 def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     # Each mode has its own deterministic stream so adding outcomes to one mode
     # cannot silently alter the subsequent modes' books.
     mode_seed = sum((index + 1) * ord(char) for index, char in enumerate(name)) + 42
     RNG.seed(mode_seed)
+    if name in ("bonus_chance", "unknown_bonus", "unknown_extreme"):
+        rows, events = build_structured_mode(name, cost, max_win, mode_seed)
+    else:
+        rows, events = _build_legacy_mode_rows(name, cost, max_win, hit_rate)
+    return _finalize_mode(name, cost, max_win, rows, events)
+
+
+def _build_legacy_mode_rows(
+    name: str, cost: float, max_win: int, hit_rate: float
+) -> tuple[list[tuple[int, int, int]], list[dict]]:
     curve = build_curve(cost, max_win, hit_rate, name)
     report = risk_report(curve, cost)
 
@@ -2046,10 +2523,31 @@ def build_mode(name: str, cost: float, max_win: int, hit_rate: float) -> dict:
     if name == "unknown_extreme":
         cap_unknown_extreme_ten_k_frequency(rows, events)
 
+    return rows, events
+
+
+def _finalize_mode(
+    name: str,
+    cost: float,
+    max_win: int,
+    rows: list[tuple[int, int, int]],
+    events: list[dict],
+) -> dict:
     # Fail generation unless every line payout adds to the SDK's authoritative
     # round payout, including all saved bonus spins and Wild Surge.
     for row_idx, (_, _, payout) in enumerate(rows):
         event = events[row_idx]["events"][0]
+        if event.get("bonusTriggered") and (
+            event.get("bonusType") == "ethereal" or event.get("scatterCount") == 6
+        ):
+            for frame_idx, frame in enumerate(event.get("bonusSpinFrames") or []):
+                f_board = frame["board"]
+                for line in PAYLINES:
+                    if all(f_board[c][r] == "WILD" for c, r in line):
+                        raise ValueError(
+                            f"{name}: ethereal bonusSpinFrames[{frame_idx}] at row {row_idx} "
+                            f"contains a prohibited full 5-WILD payline"
+                        )
         if payout <= 0:
             continue
         if event["bonusTriggered"]:

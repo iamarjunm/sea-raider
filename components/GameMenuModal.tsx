@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Anchor, Maximize2, ScrollText, X, Zap } from 'lucide-react';
+import { Anchor, Compass, Maximize2, ScrollText, X, Zap } from 'lucide-react';
 import { toSocialText } from '../lib/currency';
 import { MAX_RTP_PERCENT } from '../lib/slot-engine';
 
@@ -32,95 +32,136 @@ export default function GameMenuModal({
       {isOpen && (
         <motion.div
           key="captains-log"
-          className="ship-overlay fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 select-none"
+          className="hud-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 select-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: 0.16 }}
           onClick={onClose}
           role="dialog"
           aria-modal="true"
           aria-labelledby="captains-log-title"
         >
           <motion.div
-            initial={{ scaleY: 0.08, opacity: 0, y: 24 }}
-            animate={{ scaleY: 1, opacity: 1, y: 0 }}
-            exit={{ scaleY: 0.08, opacity: 0, y: 24 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className="ship-scroll relative w-full max-w-[520px]"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.96, opacity: 0, y: 14, transition: { duration: 0.14 } }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            className="hud-cabinet hud-menu w-full max-w-[490px]"
             onClick={(event) => event.stopPropagation()}
           >
-            <span className="ship-scroll__rod ship-scroll__rod--top" aria-hidden="true" />
-            <div className="ship-dialog ship-dialog--scroll px-5 py-6 sm:px-8 sm:py-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="ship-kicker">Sea Raider · Logbook</p>
-                  <h2 id="captains-log-title" className="ship-heading mt-1 text-3xl sm:text-4xl">Captain&apos;s Log</h2>
-                  <p className="ship-body mt-1 text-xs italic">Settings, rules &amp; the ship&apos;s particulars</p>
-                </div>
-                <button onClick={onClose} aria-label="Close captain's log" className="ship-seal-close">
-                  <X size={18} strokeWidth={3} />
-                </button>
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--tl" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--tr" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--bl" aria-hidden="true" />
+            <span className="hud-cabinet__bracket hud-cabinet__bracket--br" aria-hidden="true" />
+
+            <header className="hud-autoplay__header">
+              <div className="hud-autoplay__badge" aria-hidden="true">
+                <Compass size={18} strokeWidth={2.3} />
               </div>
+              <div className="min-w-0 flex-1">
+                <p className="hud-kicker">SEA RAIDER · BRIDGE CONTROLS</p>
+                <h2 id="captains-log-title" className="hud-title">
+                  Captain&apos;s Log
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close captain's log"
+                className="hud-close-btn"
+              >
+                <X size={17} strokeWidth={2.6} />
+              </button>
+            </header>
 
-              <div className="ship-rule my-4" aria-hidden="true" />
-
+            <div className="hud-autoplay__body">
               <ul className="flex flex-col gap-2.5">
-                <li className="ship-entry">
-                  <span className="ship-entry__icon"><Zap size={18} /></span>
+                <li className="hud-menu-row">
+                  <span className="hud-menu-row__icon">
+                    <Zap size={17} />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <div className="ship-entry__title">Turbo spins</div>
-                    <div className="ship-entry__note">Cycle Off, Turbo and Ultra speeds</div>
+                    <div className="hud-menu-row__title">Turbo Spins</div>
+                    <div className="hud-menu-row__sub">Cycle Off, Turbo and Ultra speeds</div>
                   </div>
-                  <button onClick={onToggleTurbo} className={`ship-toggle ${turboLevel > 0 ? 'is-on' : ''}`} aria-label={`Turbo: ${turboLabel}. Change speed`}>
+                  <button
+                    type="button"
+                    onClick={onToggleTurbo}
+                    className={`hud-action-pill ${turboLevel > 0 ? 'is-active' : ''}`}
+                    aria-label={`Turbo: ${turboLabel}. Change speed`}
+                  >
                     {turboLabel}
                   </button>
                 </li>
-                <li className="ship-entry">
-                  <span className="ship-entry__icon"><Maximize2 size={18} /></span>
+
+                <li className="hud-menu-row">
+                  <span className="hud-menu-row__icon">
+                    <Maximize2 size={17} />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <div className="ship-entry__title">Full screen</div>
-                    <div className="ship-entry__note">Edge-to-edge voyage on the open sea</div>
-                  </div>
-                  <button onClick={onToggleFullscreen} className="ship-toggle">Toggle</button>
-                </li>
-                <li className="ship-entry">
-                  <span className="ship-entry__icon"><ScrollText size={18} /></span>
-                  <div className="min-w-0 flex-1">
-                    <div className="ship-entry__title">{toSocialText('Paytable & rules', isSocial)}</div>
-                    <div className="ship-entry__note">20 fixed paylines, symbol values &amp; bonus triggers</div>
+                    <div className="hud-menu-row__title">Full Screen</div>
+                    <div className="hud-menu-row__sub">Edge-to-edge voyage on the open sea</div>
                   </div>
                   <button
+                    type="button"
+                    onClick={onToggleFullscreen}
+                    className="hud-action-pill"
+                  >
+                    Toggle
+                  </button>
+                </li>
+
+                <li className="hud-menu-row">
+                  <span className="hud-menu-row__icon">
+                    <ScrollText size={17} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="hud-menu-row__title">
+                      {toSocialText('Paytable & Rules', isSocial)}
+                    </div>
+                    <div className="hud-menu-row__sub">
+                      20 fixed paylines, symbol values &amp; bonus triggers
+                    </div>
+                  </div>
+                  <button
+                    type="button"
                     onClick={() => {
                       onClose();
                       onOpenPaytable();
                     }}
-                    className="ship-button ship-button--small"
+                    className="hud-action-pill is-gold"
                   >
-                    Read
+                    Open
                   </button>
                 </li>
               </ul>
 
-              <div className="ship-ledger mt-5 grid grid-cols-3 text-center">
-                <div>
-                  <div className="ship-ledger__label">Theoretical RTP</div>
-                  <div className="ship-ledger__value">{MAX_RTP_PERCENT.toFixed(2)}%</div>
+              <div className="hud-summary-strip mt-1">
+                <div className="hud-summary-strip__cell">
+                  <span className="hud-summary-strip__label">THEORETICAL RTP</span>
+                  <strong className="hud-summary-strip__value text-[#4de2d1] tabular-nums">
+                    {MAX_RTP_PERCENT.toFixed(2)}%
+                  </strong>
                 </div>
-                <div>
-                  <div className="ship-ledger__label">Volatility</div>
-                  <div className="ship-ledger__value ship-ledger__value--red">Very high</div>
+                <div className="hud-summary-strip__cell text-center">
+                  <span className="hud-summary-strip__label">VOLATILITY</span>
+                  <strong className="hud-summary-strip__value text-[#ff9d8a]">
+                    Very High
+                  </strong>
                 </div>
-                <div>
-                  <div className="ship-ledger__label">Max win</div>
-                  <div className="ship-ledger__value">50,000×</div>
+                <div className="hud-summary-strip__cell text-right">
+                  <span className="hud-summary-strip__label">MAX WIN</span>
+                  <strong className="hud-summary-strip__value text-[#f2c464] tabular-nums">
+                    50,000×
+                  </strong>
                 </div>
               </div>
-              <p className="ship-body mt-4 flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-[.2em] opacity-70">
-                <Anchor size={11} /> Fair winds, captain
+
+              <p className="mt-1 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[#9eb0b5]/75">
+                <Anchor size={11} className="text-[#c9a460]" /> Fair winds, captain
               </p>
             </div>
-            <span className="ship-scroll__rod ship-scroll__rod--bottom" aria-hidden="true" />
           </motion.div>
         </motion.div>
       )}
